@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Buy PDF</title>
+
+  <!-- Global styles served by Go -->
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+         <h1>Neha's Academy</h1>
+          
+          <p>Secure payment • Email-based delivery</p>
+        </div>
+      </div>
+      <div class="badge">PDF Pay & Deliver</div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid">
+
+      <!-- LEFT CARD: CONTENT INFO -->
+      <div class="card">
+        <h2 id="title">Loading...</h2>
+        <p class="sub" id="desc">
+          Please wait while we load the content details.
+        </p>
+
+        <div class="meta">
+          <div class="pill">Type: <strong>PDF</strong></div>
+          <div class="pill">Delivery: <strong>Email link</strong></div>
+          <div class="pill">Expiry: <strong>30 minutes</strong></div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="price">
+          <div>
+            <div class="amount" id="price">₹ -- <small>INR</small></div>
+            <div class="note" id="contentIdText"></div>
+          </div>
+        </div>
+
+        <div id="status" class="alert" style="display:none;"></div>
+
+        <div class="footer">
+          Secure backend verification • No public links
+        </div>
+      </div>
+
+      <!-- RIGHT CARD: BUYER FORM -->
+      <div class="card">
+        <h2>Buyer details</h2>
+        <p class="sub">
+          Enter your details. After payment, you will receive an email with a secure access link.
+        </p>
+
+        <form id="buyForm" class="form">
+
+          <div>
+            <div class="label">Full name</div>
+            <input
+              class="input"
+              id="name"
+              placeholder="e.g., John Dev"
+              required
+            />
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="label">Email address</div>
+              <input
+                class="input"
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            <div>
+              <div class="label">Mobile number</div>
+              <input
+                class="input"
+                id="mobile"
+                type="tel"
+                inputmode="numeric"
+                pattern="[0-9]{10}"
+                maxlength="10"
+                placeholder="10-digit mobile"
+                required
+              />
+            </div>
+          </div>
+
+          <button class="btn" id="payBtn" type="submit">
+            Proceed to Pay
+          </button>
+
+          <div class="note">
+            ✅ Payment verified on server (webhook)<br/>
+            ✅ Secure email link expires in 30 minutes<br/>
+            ⚠️ Do not share your access link
+          </div>
+        </form>
+
+        <div class="footer">
+          Powered by Go + Gin • Monolithic MVP
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PAGE LOGIC -->
+  <script>
+    const API_BASE = "";
+
+    function showStatus(type, text) {
+      const el = document.getElementById("status");
+      el.style.display = "block";
+      el.className = "alert " + (type === "ok" ? "ok" : type === "err" ? "err" : "");
+      el.textContent = text;
+    }
+
+    function getContentId() {
+      // For /buy/{contentId}
+      const parts = location.pathname.split("/").filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last && last !== "buy") return last;
+
+      // Fallback: /buy.html?content_id=...
+      const qs = new URLSearchParams(location.search);
+      return qs.get("content_id");
+    }
+
+    const contentId = getContentId();
+    document.getElementById("contentIdText").textContent =
+      contentId ? ("Content ID: " + contentId) : "Content ID missing";
+
+    async function loadContent() {
+      if (!contentId) {
+        document.getElementById("title").textContent = "Invalid link";
+        document.getElementById("desc").textContent = "Missing content id.";
+        showStatus("err", "❌ Invalid purchase link.");
+        return;
+      }
+
+      try {
+        const res = await fetch(API_BASE + "/api/content/" + encodeURIComponent(contentId));
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Content not found");
+        }
+
+        document.getElementById("title").textContent = data.title || "Untitled PDF";
+        document.getElementById("desc").textContent = data.description || "Secure PDF purchase.";
+        document.getElementById("price").innerHTML =
+          "₹ " + (data.price ?? "--") + " <small>INR</small>";
+
+      } catch (err) {
+        showStatus("err", "❌ Failed to load content.\n" + err.message);
+      }
+    }
+
+    loadContent();
+
+    document.getElementById("buyForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payBtn = document.getElementById("payBtn");
+      payBtn.disabled = true;
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const mobile = document.getElementById("mobile").value.trim();
+
+      if (!/^[0-9]{10}$/.test(mobile)) {
+        showStatus("err", "❌ Please enter a valid 10-digit mobile number.");
+        payBtn.disabled = false;
+        return;
+      }
+
+      showStatus("", "Creating order...");
+
+      try {
+        const res = await fetch(API_BASE + "/api/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content_id: contentId,
+            name,
+            email,
+            mobile
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to create order");
+
+        showStatus(
+          "ok",
+          "✅ Order created.\n\n" +
+          "Next step: Razorpay checkout will open.\n" +
+          "Order ID: " + data.order_id + "\n\n" +
+          "After successful payment, you will receive an email with the access link."
+        );
+
+      } catch (err) {
+        showStatus("err", "❌ " + err.message);
+      } finally {
+        payBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

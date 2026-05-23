@@ -1,0 +1,9 @@
+Hello {{.BuyerName}},
+
+Thank you for your purchase. Your order has been confirmed successfully.
+
+Product: {{.Title}}
+
+A copy of the purchased PDF is attached to this email.
+
+If you need any assistance, please contact our support team.

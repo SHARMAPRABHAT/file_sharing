@@ -7,6 +7,7 @@
 
   <!-- Global styles served by Go -->
   <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
   <div class="container">
@@ -191,7 +192,7 @@
         return;
       }
 
-      showStatus("", "Creating order...");
+      showStatus("", "Creating Razorpay order...");
 
       try {
         const res = await fetch(API_BASE + "/api/create-order", {
@@ -208,17 +209,67 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to create order");
 
-        showStatus(
-          "ok",
-          "✅ Order created.\n\n" +
-          "Next step: Razorpay checkout will open.\n" +
-          "Order ID: " + data.order_id + "\n\n" +
-          "After successful payment, you will receive an email with the access link."
-        );
+        const options = {
+          key: data.key_id,
+          amount: data.amount,
+          currency: data.currency,
+          name: "Neha's Academy",
+          description: data.content_title,
+          order_id: data.order_id,
+          prefill: {
+            name,
+            email,
+            contact: mobile,
+          },
+          theme: {
+            color: "#6ea8fe",
+          },
+          handler: async function (response) {
+            showStatus("", "✅ Payment received. Verifying payment...");
 
+            try {
+              const verifyRes = await fetch(API_BASE + "/api/verify-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  content_id: contentId,
+                  name: name,
+                  email: email,
+                  order_id: response.razorpay_order_id,
+                  payment_id: response.razorpay_payment_id,
+                  signature: response.razorpay_signature,
+                }),
+              });
+
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok || verifyData.status !== "ok") {
+                const message = verifyData.message || verifyData.error || verifyData.details || "Payment verification failed";
+                throw new Error(message);
+              }
+
+              showStatus(
+                "ok",
+                "✅ Payment verified successfully.\n\n" +
+                "Your secure access link will be sent to your email shortly.\n" +
+                "Order ID: " + response.razorpay_order_id
+              );
+            } catch (err) {
+              showStatus("err", "❌ " + err.message);
+            } finally {
+              payBtn.disabled = false;
+            }
+          },
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.on("payment.failed", function (response) {
+          showStatus("err", "❌ Payment failed: " + (response.error?.description || "Please try again."));
+          payBtn.disabled = false;
+        });
+
+        razorpay.open();
       } catch (err) {
         showStatus("err", "❌ " + err.message);
-      } finally {
         payBtn.disabled = false;
       }
     });

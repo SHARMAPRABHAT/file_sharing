@@ -4,102 +4,87 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Buy PDF</title>
-
-  <!-- Global styles served by Go -->
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/style.css?v=20260524-3" />
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
-  <div class="container">
-
-    <!-- HEADER -->
-    <div class="header">
+  <div class="container buy-page-shell">
+    <header class="buy-page-header">
       <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
+        <div class="brand-mark" aria-hidden="true">N</div>
         <div>
-         <h1>Neha's Academy</h1>
-          
-          <p>Secure payment • Email-based delivery</p>
+          <p class="brand-title">Neha's Academy</p>
+          <p class="brand-tag">Secure payment • Email-based delivery</p>
         </div>
       </div>
-      <div class="badge">PDF Pay & Deliver</div>
-    </div>
+      <a href="/" class="buy-back-link">← Back to home</a>
+    </header>
 
-    <!-- MAIN GRID -->
-    <div class="grid">
+    <div class="buy-layout">
+      <section class="buy-card">
+        <div class="buy-select-panel" id="selectionBlock">
+          <div>
+            <label class="label" for="pdfSelect">Select PDF to buy</label>
+            <select id="pdfSelect" class="input" required>
+              <option value="">Loading PDFs...</option>
+            </select>
+          </div>
 
-      <!-- LEFT CARD: CONTENT INFO -->
-      <div class="card">
+          <p id="contentIdText" class="form-note">
+            Selected PDF details will load automatically.
+          </p>
+        </div>
+
+        <p class="eyebrow" style="margin-top: 1.15rem;">Purchase overview</p>
         <h2 id="title">Loading...</h2>
-        <p class="sub" id="desc">
-          Please wait while we load the content details.
+        <p class="buy-summary" id="desc">Please wait while we load the product details.</p>
+
+        <div class="buy-price-box">
+          <span class="price-label">Your total</span>
+          <span class="buy-price-large" id="price">₹ --</span>
+        </div>
+
+        <div class="buy-meta-list">
+          <div class="buy-meta-item">Type <strong>PDF</strong></div>
+          <div class="buy-meta-item">Delivery <strong>Email access</strong></div>
+          <div class="buy-meta-item">Access window <strong>30 minutes</strong></div>
+          <div class="buy-meta-item">Gateway <strong>Razorpay</strong></div>
+        </div>
+
+        <ul class="buy-benefits">
+          <li>Secure server-side payment verification before access is granted.</li>
+          <li>Instant email delivery of your secure download link after confirmation.</li>
+          <li>Access expires automatically after the short study window.</li>
+        </ul>
+      </section>
+
+      <section class="buy-card">
+        <p class="eyebrow">Buyer details</p>
+        <h2>Complete your purchase</h2>
+        <p class="buy-summary">
+          Enter your details to proceed to Razorpay checkout. Your secure access link will be sent to your email after verification.
         </p>
 
-        <div class="meta">
-          <div class="pill">Type: <strong>PDF</strong></div>
-          <div class="pill">Delivery: <strong>Email link</strong></div>
-          <div class="pill">Expiry: <strong>30 minutes</strong></div>
-        </div>
-
-        <div class="hr"></div>
-
-        <div class="price">
-          <div>
-            <div class="amount" id="price">₹ -- <small>INR</small></div>
-            <div class="note" id="contentIdText"></div>
-          </div>
-        </div>
-
-        <div id="status" class="alert" style="display:none;"></div>
-
-        <div class="footer">
-          Secure backend verification • No public links
-        </div>
-      </div>
-
-      <!-- RIGHT CARD: BUYER FORM -->
-      <div class="card">
-        <h2>Buyer details</h2>
-        <p class="sub">
-          Enter your details. After payment, you will receive an email with a secure access link.
-        </p>
-
-        <form id="buyForm" class="form">
-
-          <div>
-            <div class="label">Full name</div>
-            <input
-              class="input"
-              id="name"
-              placeholder="e.g., John Dev"
-              required
-            />
-          </div>
-
-          <div class="row">
+        <form id="buyForm" class="buy-form-grid" style="margin-top: 1rem;">
+          <div class="form-row">
             <div>
-              <div class="label">Email address</div>
-              <input
-                class="input"
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                required
-              />
+              <label class="label" for="name">Full name</label>
+              <input class="input" id="name" placeholder="e.g., Neha Sharma" required />
             </div>
-
             <div>
-              <div class="label">Mobile number</div>
-              <input
-                class="input"
-                id="mobile"
-                type="tel"
-                inputmode="numeric"
-                pattern="[0-9]{10}"
-                maxlength="10"
-                placeholder="10-digit mobile"
-                required
-              />
+              <label class="label" for="email">Email address</label>
+              <input class="input" id="email" type="email" placeholder="you@example.com" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label class="label" for="mobile">Mobile number</label>
+              <input class="input" id="mobile" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile" required />
+            </div>
+            <div>
+              <label class="label" for="status">Order status</label>
+              <div id="status" class="status-banner" role="status" aria-live="polite" style="display:none;"></div>
             </div>
           </div>
 
@@ -107,79 +92,148 @@
             Proceed to Pay
           </button>
 
-          <div class="note">
-            ✅ Payment verified on server (webhook)<br/>
-            ✅ Secure email link expires in 30 minutes<br/>
-            ⚠️ Do not share your access link
-          </div>
+          <p class="form-note">
+            ✅ Payment is verified on the server before the access link is issued.<br />
+            ✅ Your access link expires automatically in 30 minutes.
+          </p>
         </form>
-
-        <div class="footer">
-          Powered by Go + Gin • Monolithic MVP
-        </div>
-      </div>
-
+      </section>
     </div>
   </div>
 
-  <!-- PAGE LOGIC -->
   <script>
     const API_BASE = "";
+
+    const titleEl = document.getElementById("title");
+    const descEl = document.getElementById("desc");
+    const priceEl = document.getElementById("price");
+    const contentIdText = document.getElementById("contentIdText");
+    const payBtn = document.getElementById("payBtn");
+    const selectionBlock = document.getElementById("selectionBlock");
+    const select = document.getElementById("pdfSelect");
 
     function showStatus(type, text) {
       const el = document.getElementById("status");
       el.style.display = "block";
-      el.className = "alert " + (type === "ok" ? "ok" : type === "err" ? "err" : "");
+      el.className = "status-banner";
+      if (type === "ok") {
+        el.classList.add("success");
+      } else if (type === "err") {
+        el.classList.add("error");
+      }
       el.textContent = text;
     }
 
     function getContentId() {
-      // For /buy/{contentId}
       const parts = location.pathname.split("/").filter(Boolean);
       const last = parts[parts.length - 1];
       if (last && last !== "buy") return last;
 
-      // Fallback: /buy.html?content_id=...
       const qs = new URLSearchParams(location.search);
       return qs.get("content_id");
     }
 
-    const contentId = getContentId();
-    document.getElementById("contentIdText").textContent =
-      contentId ? ("Content ID: " + contentId) : "Content ID missing";
+    let selectedContentId = getContentId() || "";
+    payBtn.disabled = true;
 
-    async function loadContent() {
-      if (!contentId) {
-        document.getElementById("title").textContent = "Invalid link";
-        document.getElementById("desc").textContent = "Missing content id.";
-        showStatus("err", "❌ Invalid purchase link.");
+    function setSelectionVisible(visible) {
+      if (selectionBlock) {
+        selectionBlock.style.display = visible ? "block" : "none";
+      }
+    }
+
+    async function loadContents() {
+      try {
+        const res = await fetch(API_BASE + "/api/contents");
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Unable to load PDFs");
+        }
+
+        select.innerHTML = "";
+
+        if (!Array.isArray(data) || data.length === 0) {
+          select.innerHTML = '<option value="">No PDFs available</option>';
+          showStatus("err", "❌ No PDFs are currently available.");
+          return;
+        }
+
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Select a PDF";
+        select.appendChild(placeholder);
+
+        data.forEach((item) => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = `${item.title} — ₹${item.price}`;
+          select.appendChild(option);
+        });
+
+        if (selectedContentId) {
+          select.value = selectedContentId;
+        }
+      } catch (err) {
+        select.innerHTML = '<option value="">Unable to load PDFs</option>';
+        showStatus("err", "❌ " + err.message);
+      }
+    }
+
+    async function loadContent(contentIdToLoad) {
+      if (!contentIdToLoad) {
+        titleEl.textContent = "Select a PDF";
+        descEl.textContent = "Choose a PDF from the dropdown to continue.";
+        priceEl.innerHTML = "₹ --";
+        contentIdText.textContent = "Select a PDF to begin checkout.";
+        payBtn.disabled = true;
         return;
       }
 
       try {
-        const res = await fetch(API_BASE + "/api/content/" + encodeURIComponent(contentId));
+        const res = await fetch(API_BASE + "/api/content/" + encodeURIComponent(contentIdToLoad));
         const data = await res.json();
 
         if (!res.ok) {
           throw new Error(data.error || "Content not found");
         }
 
-        document.getElementById("title").textContent = data.title || "Untitled PDF";
-        document.getElementById("desc").textContent = data.description || "Secure PDF purchase.";
-        document.getElementById("price").innerHTML =
-          "₹ " + (data.price ?? "--") + " <small>INR</small>";
-
+        selectedContentId = contentIdToLoad;
+        titleEl.textContent = data.title || "Untitled PDF";
+        descEl.textContent = data.description || "Secure PDF purchase.";
+        priceEl.innerHTML = "₹ " + (data.price ?? "--");
+        contentIdText.textContent = "Content ID: " + contentIdToLoad;
+        payBtn.disabled = false;
       } catch (err) {
-        showStatus("err", "❌ Failed to load content.\n" + err.message);
+        showStatus("err", "❌ Failed to load content. " + err.message);
+        payBtn.disabled = true;
       }
     }
 
-    loadContent();
+    if (selectedContentId) {
+      setSelectionVisible(false);
+      contentIdText.textContent = "Content ID: " + selectedContentId;
+      loadContents();
+      loadContent(selectedContentId);
+    } else {
+      setSelectionVisible(true);
+      loadContents();
+    }
+
+    select.addEventListener("change", () => {
+      if (select.value) {
+        loadContent(select.value);
+      }
+    });
 
     document.getElementById("buyForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const payBtn = document.getElementById("payBtn");
+      if (!selectedContentId) {
+        showStatus("err", "❌ Please select a PDF before continuing.");
+        return;
+      }
+
       payBtn.disabled = true;
 
       const name = document.getElementById("name").value.trim();
@@ -199,11 +253,11 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            content_id: contentId,
+            content_id: selectedContentId,
             name,
             email,
-            mobile
-          })
+            mobile,
+          }),
         });
 
         const data = await res.json();
@@ -222,7 +276,7 @@
             contact: mobile,
           },
           theme: {
-            color: "#6ea8fe",
+            color: "#8cceff",
           },
           handler: async function (response) {
             showStatus("", "✅ Payment received. Verifying payment...");
@@ -232,9 +286,9 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  content_id: contentId,
-                  name: name,
-                  email: email,
+                  content_id: selectedContentId,
+                  name,
+                  email,
                   order_id: response.razorpay_order_id,
                   payment_id: response.razorpay_payment_id,
                   signature: response.razorpay_signature,
@@ -249,9 +303,7 @@
 
               showStatus(
                 "ok",
-                "✅ Payment verified successfully.\n\n" +
-                "Your secure access link will be sent to your email shortly.\n" +
-                "Order ID: " + response.razorpay_order_id
+                "✅ Payment verified successfully. Your secure access link will be sent to your email shortly. Order ID: " + response.razorpay_order_id
               );
             } catch (err) {
               showStatus("err", "❌ " + err.message);

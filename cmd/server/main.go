@@ -7,12 +7,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
-	"mime/multipart"
 	"net/http"
-	"net/smtp"
-	"net/textproto"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -22,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	razorpay "github.com/razorpay/razorpay-go"
 )
 
@@ -96,6 +96,10 @@ var (
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Printf("⚠️ could not load .env file: %v", err)
+	}
+
 	port := getenv("APP_PORT", "8080")
 	baseURL := getenv("APP_BASE_URL", "http://localhost:"+port)
 	ttlMinutes := getenvInt("TOKEN_TTL_MINUTES", 30)
@@ -103,11 +107,8 @@ func main() {
 
 	keyID := getenv("RAZORPAY_KEY_ID", "")
 	keySecret := getenv("RAZORPAY_KEY_SECRET", "")
-	smtpHost := getenv("SMTP_HOST", "")
-	smtpPort := getenv("SMTP_PORT", "587")
-	smtpUser := getenv("SMTP_USERNAME", "")
-	smtpPass := getenv("SMTP_PASSWORD", "")
-	smtpFrom := getenv("SMTP_FROM", "")
+	resendAPIKey := getenv("RESEND_API_KEY", "")
+	resendFrom := getenv("RESEND_FROM", "")
 
 	var razorpayClient *razorpay.Client
 	if keyID != "" && keySecret != "" {
@@ -117,8 +118,8 @@ func main() {
 		log.Printf("⚠️ Razorpay env vars not set; create-order will return an error until configured")
 	}
 
-	if smtpHost == "" || smtpFrom == "" {
-		log.Printf("⚠️ SMTP is not fully configured; payment verification will fail until SMTP_HOST and SMTP_FROM are set")
+	if resendAPIKey == "" || resendFrom == "" {
+		log.Printf("⚠️ Resend is not fully configured; payment verification will fail until RESEND_API_KEY and RESEND_FROM are set")
 	}
 
 	r := gin.New()
@@ -129,6 +130,14 @@ func main() {
 	})
 
 	r.Static("/static", "./web/static")
+
+	r.GET("/", func(c *gin.Context) {
+		c.File("./web/static/landing.html")
+	})
+
+	r.GET("/buy", func(c *gin.Context) {
+		c.File("./web/static/buy.html")
+	})
 
 	r.GET("/buy/:contentId", func(c *gin.Context) {
 		c.File("./web/static/buy.html")
@@ -142,6 +151,14 @@ func main() {
 			return
 		}
 		c.JSON(http.StatusOK, content)
+	})
+
+	r.GET("/api/contents", func(c *gin.Context) {
+		list := make([]Content, 0, len(contents))
+		for _, content := range contents {
+			list = append(list, content)
+		}
+		c.JSON(http.StatusOK, list)
 	})
 
 	r.POST("/api/create-order", func(c *gin.Context) {
@@ -227,8 +244,8 @@ func main() {
 			c.JSON(http.StatusInternalServerError, VerifyPaymentResp{Status: "failed", Message: "Razorpay is not configured"})
 			return
 		}
-		if smtpHost == "" || smtpFrom == "" {
-			c.JSON(http.StatusInternalServerError, VerifyPaymentResp{Status: "failed", Message: "SMTP is not configured"})
+		if resendAPIKey == "" || resendFrom == "" {
+			c.JSON(http.StatusInternalServerError, VerifyPaymentResp{Status: "failed", Message: "Resend is not configured"})
 			return
 		}
 		if !verifySignature(req.RazorpayOrderID, req.RazorpayPaymentID, req.RazorpaySignature, keySecret) {
@@ -267,7 +284,7 @@ func main() {
 		tokenMu.Unlock()
 
 		accessURL := fmt.Sprintf("%s/access/%s", strings.TrimRight(baseURL, "/"), token)
-		if err := sendDeliveryEmail(smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, buyerEmail, buyerName, content, accessURL, expiresAt); err != nil {
+		if err := sendDeliveryEmail(resendAPIKey, resendFrom, buyerEmail, buyerName, content, accessURL, expiresAt); err != nil {
 			c.JSON(http.StatusInternalServerError, VerifyPaymentResp{Status: "failed", Message: "failed to send delivery email: " + err.Error()})
 			return
 		}
@@ -311,10 +328,6 @@ func main() {
 		c.Header("Content-Type", "application/pdf")
 		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filepath.Base(content.FilePath)))
 		c.File(content.FilePath)
-	})
-
-	r.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusFound, "/buy/sample123")
 	})
 
 	addr := ":" + port
@@ -379,9 +392,22 @@ func isValidMobile10(m string) bool {
 	return true
 }
 
-func sendDeliveryEmail(smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, to, buyerName string, content Content, accessURL string, expiresAt time.Time) error {
-	if smtpHost == "" || smtpFrom == "" {
-		return fmt.Errorf("SMTP is not configured")
+type resendAttachment struct {
+	Filename string `json:"filename"`
+	Content  string `json:"content"`
+}
+
+type resendPayload struct {
+	From        string             `json:"from"`
+	To          []string           `json:"to"`
+	Subject     string             `json:"subject"`
+	Text        string             `json:"text"`
+	Attachments []resendAttachment `json:"attachments,omitempty"`
+}
+
+func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content Content, accessURL string, expiresAt time.Time) error {
+	if resendAPIKey == "" || resendFrom == "" {
+		return fmt.Errorf("Resend is not configured")
 	}
 	if buyerName == "" {
 		buyerName = "there"
@@ -402,17 +428,6 @@ func sendDeliveryEmail(smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, to, buy
 		return fmt.Errorf("failed to parse email template: %w", err)
 	}
 
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-
-	textPart, err := writer.CreatePart(textproto.MIMEHeader{
-		"Content-Type":              {"text/plain; charset=utf-8"},
-		"Content-Transfer-Encoding": {"7bit"},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create text part: %w", err)
-	}
-
 	var rendered bytes.Buffer
 	if err := tmpl.Execute(&rendered, map[string]string{
 		"BuyerName": buyerName,
@@ -422,36 +437,44 @@ func sendDeliveryEmail(smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom, to, buy
 	}); err != nil {
 		return fmt.Errorf("failed to render email template: %w", err)
 	}
-	if _, err := textPart.Write(rendered.Bytes()); err != nil {
-		return fmt.Errorf("failed to write text part: %w", err)
-	}
 
-	encodedPayload := []byte(base64Encode(payload))
-	filePart, err := writer.CreatePart(textproto.MIMEHeader{
-		"Content-Type":              {"application/pdf"},
-		"Content-Disposition":       {fmt.Sprintf(`attachment; filename="%s"`, filepath.Base(content.FilePath))},
-		"Content-Transfer-Encoding": {"base64"},
+	body, err := json.Marshal(resendPayload{
+		From:    resendFrom,
+		To:      []string{to},
+		Subject: "Your purchase is confirmed",
+		Text:    rendered.String(),
+		Attachments: []resendAttachment{{
+			Filename: filepath.Base(content.FilePath),
+			Content:  base64Encode(payload),
+		}},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create file part: %w", err)
-	}
-	if _, err := filePart.Write(encodedPayload); err != nil {
-		return fmt.Errorf("failed to write file part: %w", err)
+		return fmt.Errorf("failed to marshal resend payload: %w", err)
 	}
 
-	if err := writer.Close(); err != nil {
-		return fmt.Errorf("failed to close multipart writer: %w", err)
+	req, err := http.NewRequest(http.MethodPost, "https://api.resend.com/emails", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to create resend request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+resendAPIKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to call Resend: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read resend response: %w", err)
+	}
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("Resend API error (%d): %s", resp.StatusCode, strings.TrimSpace(string(responseBody)))
 	}
 
-	messageBytes := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: Your purchase is confirmed\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=%s\r\n\r\n%s", smtpFrom, to, writer.Boundary(), body.String()))
-
-	addr := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
-	var auth smtp.Auth
-	if smtpUser != "" || smtpPass != "" {
-		auth = smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
-	}
-
-	return smtp.SendMail(addr, auth, smtpFrom, []string{to}, messageBytes)
+	return nil
 }
 
 func base64Encode(data []byte) string {

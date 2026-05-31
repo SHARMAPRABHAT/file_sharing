@@ -3,21 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Buy PDF</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260524-3" />
+  <title>Buy UGC NET PDF Notes</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260527-net-2" />
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
   <div class="container buy-page-shell">
     <header class="buy-page-header">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">N</div>
-        <div>
-          <p class="brand-title">Neha's Academy</p>
-          <p class="brand-tag">Secure payment • Email-based delivery</p>
-        </div>
+        <img class="brand-logo" src="/static/logo.jpg" alt="" aria-hidden="true" />
       </div>
-      <a href="/" class="buy-back-link">← Back to home</a>
+      <a href="/" class="buy-back-link">Back to home</a>
     </header>
 
     <div class="buy-layout">
@@ -41,20 +37,20 @@
 
         <div class="buy-price-box">
           <span class="price-label">Your total</span>
-          <span class="buy-price-large" id="price">₹ --</span>
+          <span class="buy-price-large" id="price">Rs. --</span>
         </div>
 
         <div class="buy-meta-list">
           <div class="buy-meta-item">Type <strong>PDF</strong></div>
           <div class="buy-meta-item">Delivery <strong>Email access</strong></div>
-          <div class="buy-meta-item">Access window <strong>30 minutes</strong></div>
-          <div class="buy-meta-item">Gateway <strong>Razorpay</strong></div>
+          <!-- <div class="buy-meta-item">Access window <strong>30 minutes</strong></div> -->
+          <!-- <div class="buy-meta-item">Gateway <strong>Razorpay</strong></div> -->
         </div>
 
         <ul class="buy-benefits">
           <li>Secure server-side payment verification before access is granted.</li>
-          <li>Instant email delivery of your secure download link after confirmation.</li>
-          <li>Access expires automatically after the short study window.</li>
+          <li>Instant email delivery of pdf after confirmation.</li>
+          <!-- <li>Access expires automatically after the short study window.</li> -->
         </ul>
       </section>
 
@@ -62,11 +58,11 @@
         <p class="eyebrow">Buyer details</p>
         <h2>Complete your purchase</h2>
         <p class="buy-summary">
-          Enter your details to proceed to Razorpay checkout. Your secure access link will be sent to your email after verification.
+          Enter your details to proceed to  checkout. Your secure access link will be sent to your email after verification.
         </p>
 
         <form id="buyForm" class="buy-form-grid" style="margin-top: 1rem;">
-          <div class="form-row">
+          <div class="buy-form-row">
             <div>
               <label class="label" for="name">Full name</label>
               <input class="input" id="name" placeholder="e.g., Neha Sharma" required />
@@ -77,7 +73,7 @@
             </div>
           </div>
 
-          <div class="form-row">
+          <div class="buy-form-row">
             <div>
               <label class="label" for="mobile">Mobile number</label>
               <input class="input" id="mobile" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile" required />
@@ -93,8 +89,8 @@
           </button>
 
           <p class="form-note">
-            ✅ Payment is verified on the server before the access link is issued.<br />
-            ✅ Your access link expires automatically in 30 minutes.
+            Payment is verified on the server before the access link is issued.<br />
+            If you face any issues, please contact us at <a href="mailto:support@nehasacademy.co.in">support@nehasacademy.co.in</a>.
           </p>
         </form>
       </section>
@@ -155,7 +151,7 @@
 
         if (!Array.isArray(data) || data.length === 0) {
           select.innerHTML = '<option value="">No PDFs available</option>';
-          showStatus("err", "❌ No PDFs are currently available.");
+          showStatus("err", "No PDFs are currently available.");
           return;
         }
 
@@ -167,7 +163,7 @@
         data.forEach((item) => {
           const option = document.createElement("option");
           option.value = item.id;
-          option.textContent = `${item.title} — ₹${item.price}`;
+          option.textContent = `${item.title} - Rs. ${item.price}`;
           select.appendChild(option);
         });
 
@@ -176,7 +172,7 @@
         }
       } catch (err) {
         select.innerHTML = '<option value="">Unable to load PDFs</option>';
-        showStatus("err", "❌ " + err.message);
+        showStatus("err", err.message);
       }
     }
 
@@ -184,7 +180,7 @@
       if (!contentIdToLoad) {
         titleEl.textContent = "Select a PDF";
         descEl.textContent = "Choose a PDF from the dropdown to continue.";
-        priceEl.innerHTML = "₹ --";
+        priceEl.innerHTML = "Rs. --";
         contentIdText.textContent = "Select a PDF to begin checkout.";
         payBtn.disabled = true;
         return;
@@ -201,11 +197,15 @@
         selectedContentId = contentIdToLoad;
         titleEl.textContent = data.title || "Untitled PDF";
         descEl.textContent = data.description || "Secure PDF purchase.";
-        priceEl.innerHTML = "₹ " + (data.price ?? "--");
+        const fakePrice = Number(data.offer_price || 0);
+        const actualPrice = Number(data.price || 0);
+        priceEl.innerHTML = fakePrice > actualPrice
+          ? `<span class="old-price">Rs. ${fakePrice}</span><span class="current-price">Rs. ${actualPrice}</span>`
+          : `<span class="current-price">Rs. ${actualPrice || "--"}</span>`;
         contentIdText.textContent = "Content ID: " + contentIdToLoad;
         payBtn.disabled = false;
       } catch (err) {
-        showStatus("err", "❌ Failed to load content. " + err.message);
+        showStatus("err", "Failed to load content. " + err.message);
         payBtn.disabled = true;
       }
     }
@@ -221,16 +221,14 @@
     }
 
     select.addEventListener("change", () => {
-      if (select.value) {
-        loadContent(select.value);
-      }
+      loadContent(select.value);
     });
 
     document.getElementById("buyForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
       if (!selectedContentId) {
-        showStatus("err", "❌ Please select a PDF before continuing.");
+        showStatus("err", "Please select a PDF before continuing.");
         return;
       }
 
@@ -241,7 +239,7 @@
       const mobile = document.getElementById("mobile").value.trim();
 
       if (!/^[0-9]{10}$/.test(mobile)) {
-        showStatus("err", "❌ Please enter a valid 10-digit mobile number.");
+        showStatus("err", "Please enter a valid 10-digit mobile number.");
         payBtn.disabled = false;
         return;
       }
@@ -276,10 +274,10 @@
             contact: mobile,
           },
           theme: {
-            color: "#8cceff",
+            color: "#0f172a",
           },
           handler: async function (response) {
-            showStatus("", "✅ Payment received. Verifying payment...");
+            showStatus("", "Payment received. Verifying payment...");
 
             try {
               const verifyRes = await fetch(API_BASE + "/api/verify-payment", {
@@ -303,10 +301,10 @@
 
               showStatus(
                 "ok",
-                "✅ Payment verified successfully. Your secure access link will be sent to your email shortly. Order ID: " + response.razorpay_order_id
+                "Payment verified successfully. Your secure access link will be sent to your email shortly. Order ID: " + response.razorpay_order_id
               );
             } catch (err) {
-              showStatus("err", "❌ " + err.message);
+              showStatus("err", err.message);
             } finally {
               payBtn.disabled = false;
             }
@@ -315,13 +313,13 @@
 
         const razorpay = new window.Razorpay(options);
         razorpay.on("payment.failed", function (response) {
-          showStatus("err", "❌ Payment failed: " + (response.error?.description || "Please try again."));
+          showStatus("err", "Payment failed: " + (response.error?.description || "Please try again."));
           payBtn.disabled = false;
         });
 
         razorpay.open();
       } catch (err) {
-        showStatus("err", "❌ " + err.message);
+        showStatus("err", err.message);
         payBtn.disabled = false;
       }
     });

@@ -30,6 +30,7 @@ type Content struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Price       int    `json:"price"`
+	OfferPrice  int    `json:"offer_price"`
 	FilePath    string `json:"-"`
 }
 
@@ -79,6 +80,7 @@ var contents = map[string]Content{
 		Title:       "Kubernetes Notes",
 		Description: "Concise notes to revise Kubernetes quickly (PDF).",
 		Price:       99,
+		OfferPrice:  199,
 		FilePath:    "./assets/abc123.pdf",
 	},
 	"sample123": {
@@ -86,6 +88,7 @@ var contents = map[string]Content{
 		Title:       "Golang Concurrency Cheatsheet",
 		Description: "Channels, worker pools, select, and common pitfalls (PDF).",
 		Price:       79,
+		OfferPrice:  149,
 		FilePath:    "./assets/sample123.pdf",
 	},
 }
@@ -130,6 +133,7 @@ func main() {
 	})
 
 	r.Static("/static", "./web/static")
+	r.StaticFile("/assets/learning-banner.png", "./assets/learning-banner.png")
 
 	r.GET("/", func(c *gin.Context) {
 		c.File("./web/static/landing.html")

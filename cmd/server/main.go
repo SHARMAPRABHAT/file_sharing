@@ -106,46 +106,152 @@ var categories = []Category{
 }
 
 var contents = map[string]Content{
-	"paper1-dictionary": {
-		ID:              "paper1-dictionary",
-		Title:           "Paper 1 Dictionary Notes",
-		Description:     "Important Paper 1 terms, definitions, and quick revision points.",
+	"teaching-aptitude-TA": {
+		ID:              "teaching-aptitude-TA",
+		Title:           "Teaching Aptitude Dictionary",
+		Description:     "200+ core concepts, basic terms, and definitions explained in simple Hinglish (PDF).",
 		Category:        "paper-1-dictionary",
-		Price:           99,
+		Price:           49,
 		OfferPrice:      199,
-		DiscountPercent: 50,
-		FilePath:        "./assets/abc123.pdf",
+		DiscountPercent: 75,
+		FilePath:        ".assets/paper-1-dictionary/teaching-aptitude-TA.pdf",
 	},
-	"commerce-dictionary": {
-		ID:              "commerce-dictionary",
-		Title:           "Commerce Dictionary Notes",
+	"research-aptitude-RA": {
+		ID:              "research-aptitude-RA",
+		Title:           "Research Aptitude Dictionary",
+		Description:     "Core research terminologies, types of research, hypothesis, and sampling terms made easy (PDF).",
+		Category:        "paper-1-dictionary",
+		Price:           49,
+		OfferPrice:      199,
+		DiscountPercent: 75,
+		FilePath:        ".assets/paper-1-dictionary/research-aptitude-RA.pdf",
+	},
+	"communication": {
+		ID:              "communication",
+		Title:           "Communication Core Terms Dictionary",
 		Description:     "Commerce terms and definitions arranged for fast recall.",
-		Category:        "commerce-dictionary",
-		Price:           99,
+		Category:        "paper-1-dictionary",
+		Price:           49,
 		OfferPrice:      199,
-		DiscountPercent: 50,
-		FilePath:        "./assets/sample123.pdf",
+		DiscountPercent: 75,
+		FilePath:        "./assets/paper-1-dictionary/communication.pdf",
 	},
-	"paper1-special-notes": {
-		ID:              "paper1-special-notes",
-		Title:           "Paper 1 Special Notes",
-		Description:     "Focused Paper 1 notes for teaching aptitude, research, ICT, and revision.",
-		Category:        "paper-1-special-notes",
-		Price:           149,
-		OfferPrice:      499,
-		DiscountPercent: 70,
-		FilePath:        "./assets/abc123.pdf",
+	"logical-reasoning-LR": {
+		ID:              "logical-reasoning-LR",
+		Title:           "Logical Reasoning Cheatsheet",
+		Description:     "Indian Logic (Pramanas), Syllogism, and Fallacies explained with simple examples and terms (PDF).",
+		Category:        "paper-1-dictionary",
+		Price:           49,
+		OfferPrice:      199,
+		DiscountPercent: 75,
+		FilePath:        "./assets/paper-1-dictionary/logical-reasoning-LR.pdf",
 	},
-	"commerce-special-notes": {
-		ID:              "commerce-special-notes",
-		Title:           "Commerce Special Notes",
-		Description:     "Special Commerce notes for core concepts, short notes, and exam revision.",
-		Category:        "commerce-special-notes",
-		Price:           149,
-		OfferPrice:      499,
-		DiscountPercent: 70,
-		FilePath:        "./assets/sample123.pdf",
+	"information-communication-technology-ICT": {
+		ID:              "information-communication-technology-ICT",
+		Title:           "ICT Glossary & Abbreviations",
+		Description:     "Complete A-to-Z of networking, internet terms, memory units, and acronyms for quick marks (PDF).",
+		Category:        "paper-1-dictionary",
+		Price:           49,
+		OfferPrice:      199,
+		DiscountPercent: 75,
+		FilePath:        "./assets/paper-1-dictionary/information-communication-technology-ICT.pdf",
 	},
+	"people-development-environment-PDE": {
+		ID:              "people-development-environment-PDE",
+		Title:           "People & Environment Facts",
+		Description:     "Important protocols (Kyoto, Paris), pollutants, and environmental terms in brief pointers (PDF).",
+		Category:        "paper-1-dictionary",
+		Price:           49,
+		OfferPrice:      199,
+		DiscountPercent: 75,
+		FilePath:        "./assets/paper-1-dictionary/people-development-environment-PDE.pdf",
+	},
+	"higher-education-system-HES": {
+		ID:              "higher-education-system-HES",
+		Title:           "Higher Education Quick Guide",
+		Description:     "Ancient universities, pre/post-independence committees, and digital initiatives simplified (PDF).",
+		Category:        "paper-1-dictionary",
+		Price:           49,
+		OfferPrice:      199,
+		DiscountPercent: 75,
+		FilePath:        "./assets/paper-1-dictionary/higher-education-system-HES.pdf",
+	},
+	"all-units-combo": {
+		ID:              "all-units-combo",
+		Title:           "All 7 Units Ultimate Dictionary Combo",
+		Description:     "Get complete access to all 7 units (Teaching, Research, Communication, Logical Reasoning, ICT, PDE, HES) in one single download. Perfect for last-minute revision! (PDF).",
+		Category:        "paper-1-dictionary",
+		Price:           299,
+		OfferPrice:      1399,
+		DiscountPercent: 79,
+		FilePath:        "./assets/paper-1-dictionary/all-units-combo.pdf",
+	},
+	//	"people-development-environment-eng": {
+	//		ID:              "people-development-environment-eng",
+	//		Title:           "People, Development & Environment",
+	//		Description:     "Master Unit 9 with high-yield theoretical concepts, real-world applications, and latest environmental updates. Includes step-by-step guidance to solve tricky application-based questions easily! (PDF).",
+	//		Category:        "paper-1-special-notes",
+	//		Price:           149,
+	//		OfferPrice:      499,
+	//		DiscountPercent: 70,
+	//		FilePath:        "./assets/paper-1-special-notes/people-development-environment-eng.pdf",
+	//	},
+	//	"people-development-environment-hindi": {
+	//		ID:              "people-development-environment-hindi",
+	//		Title:           "लोग, विकास और पर्यावरण (PDE): स्पेशल नोट्स",
+	//		Description:     "यूनिट 9 पर मजबूत पकड़ बनाएं! इसमें आपको मिलेंगे उच्च स्तरीय सैद्धांतिक विषय, वास्तविक अनुप्रयोग (Applications), और पर्यावरण से जुड़े नवीनतम करंट अफेयर्स। कठिन और एप्लीकेशन-आधारित प्रश्नों को आसानी से हल करने के लिए स्टेप-बाय-स्टेप मार्गदर्शन शामिल है! (PDF).",
+	//		Category:        "paper-1-special-notes",
+	//		Price:           149,
+	//		OfferPrice:      499,
+	//		DiscountPercent: 70,
+	//		FilePath:        "./assets/paper-1-special-notes/people-development-environment-hindi.pdf",
+	//	},
+	//	"people-development-environment-bilingual": {
+	//		ID:    "people-development-environment-bilingual",
+	//		Title: "PDE Special Notes with Application (Bilingual Combo)",
+	//		Description: `Master Unit 9 in your preferred language! Complete theoretical concepts, real-world applications, and latest environment updates provided in both Hindi & English.
+	//
+	// यूनिट 9 पर मजबूत पकड़ बनाएं! इसमें आपको मिलेंगे उच्च स्तरीय सैद्धांतिक विषय, वास्तविक अनुप्रयोग और पर्यावरण के नवीनतम करंट अफेयर्स हिंदी और अंग्रेजी दोनों भाषाओं में। (PDF).`,
+	//
+	//		DiscountPercent: 70,
+	//		Category:        "paper-1-special-notes",
+	//		Price:           199,
+	//		OfferPrice:      599,
+	//		FilePath:        "./assets/paper-1-special-notes/people-development-environment-bilingual.pdf",
+	//	},
+	//	"higher-education-system-eng": {
+	//		ID:              "higher-education-system-eng",
+	//		Title:           "Higher Education System",
+	//		Description:     "Comprehensive notes covering Ancient Education, Pre/Post Independence Committees, NEP 2020, and Governance. Master application-based questions on institutional bodies and latest digital schemes easily! (PDF).",
+	//		Category:        "paper-1-special-notes",
+	//		Price:           149,
+	//		OfferPrice:      499,
+	//		DiscountPercent: 70,
+	//		FilePath:        "./assets/paper-1-special-notes/higher-education-system-eng.pdf",
+	//	},
+	//	"higher-education-system-hindi": {
+	//		ID:              "higher-education-system-hindi",
+	//		Title:           "उच्च शिक्षा प्रणाली (HES): स्पेशल नोट्स",
+	//		Description:     "प्राचीन शिक्षा, स्वतंत्रता से पहले और बाद की समितियां, NEP 2020 और शासन व्यवस्था को कवर करने वाले संपूर्ण नोट्स। विभिन्न संस्थागत निकायों (Institutional Bodies) और सरकार की नवीनतम डिजिटल योजनाओं पर आने वाले एप्लीकेशन-आधारित प्रश्नों को आसानी से हल करना सीखें! (PDF).",
+	//		Category:        "paper-1-special-notes",
+	//		Price:           149,
+	//		OfferPrice:      499,
+	//		DiscountPercent: 70,
+	//		FilePath:        "./assets/paper-1-special-notes/higher-education-system-hindi.pdf",
+	//	},
+	//	"higher-education-system-bilingual": {
+	//		ID:    "higher-education-system-bilingual",
+	//		Title: "HES Special Notes with Application (Bilingual Combo)",
+	//		Description: `Comprehensive notes covering Ancient Education, Committees, NEP 2020, and Governance. Master tricky application-based questions with content available in both Hindi & English.
+	//
+	// प्राचीन शिक्षा, समितियां, NEP 2020 और शासन व्यवस्था को कवर करने वाले संपूर्ण नोट्स। कठिन और एप्लीकेशन-आधारित प्रश्नों को हल करने का तरीका सीखें, अब हिंदी और अंग्रेजी दोनों भाषाओं में उपलब्ध। (PDF).`,
+	//
+	//		Category:        "paper-1-special-notes",
+	//		Price:           149,
+	//		OfferPrice:      499,
+	//		DiscountPercent: 70,
+	//		FilePath:        "./assets/paper-1-special-notes/higher-education-system-bilingual.pdf",
+	//	},
 }
 
 var (
@@ -198,7 +304,7 @@ func main() {
 		c.File("./web/static/buy.html")
 	})
 
-	r.GET("/buy/:category/:contentId", func(c *gin.Context) {
+	r.GET("/buy/:contentId", func(c *gin.Context) {
 		c.File("./web/static/buy.html")
 	})
 

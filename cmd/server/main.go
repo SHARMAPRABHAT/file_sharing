@@ -26,12 +26,20 @@ import (
 )
 
 type Content struct {
+	ID              string `json:"id"`
+	Title           string `json:"title"`
+	Description     string `json:"description"`
+	Category        string `json:"category"`
+	Price           int    `json:"price"`
+	OfferPrice      int    `json:"offer_price"`
+	DiscountPercent int    `json:"discount_percent"`
+	FilePath        string `json:"-"`
+}
+
+type Category struct {
 	ID          string `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Price       int    `json:"price"`
-	OfferPrice  int    `json:"offer_price"`
-	FilePath    string `json:"-"`
 }
 
 type CreateOrderReq struct {
@@ -74,22 +82,69 @@ type AccessToken struct {
 	CreatedAt time.Time
 }
 
-var contents = map[string]Content{
-	"abc123": {
-		ID:          "abc123",
-		Title:       "Kubernetes Notes",
-		Description: "Concise notes to revise Kubernetes quickly (PDF).",
-		Price:       99,
-		OfferPrice:  199,
-		FilePath:    "./assets/abc123.pdf",
+var categories = []Category{
+	{
+		ID:          "paper-1-dictionary",
+		Title:       "PAPER 1 DICTIONARY",
+		Description: "Paper 1 dictionary notes for quick concept revision.",
 	},
-	"sample123": {
-		ID:          "sample123",
-		Title:       "Golang Concurrency Cheatsheet",
-		Description: "Channels, worker pools, select, and common pitfalls (PDF).",
-		Price:       79,
-		OfferPrice:  149,
-		FilePath:    "./assets/sample123.pdf",
+	{
+		ID:          "commerce-dictionary",
+		Title:       "COMMERCE DICTIONARY",
+		Description: "Commerce dictionary notes for important terms and definitions.",
+	},
+	{
+		ID:          "paper-1-special-notes",
+		Title:       "PAPER 1 SPECIAL NOTES",
+		Description: "Special Paper 1 notes for focused exam preparation.",
+	},
+	{
+		ID:          "commerce-special-notes",
+		Title:       "COMMERCE SPECIAL NOTES",
+		Description: "Special Commerce notes for revision and practice.",
+	},
+}
+
+var contents = map[string]Content{
+	"paper1-dictionary": {
+		ID:              "paper1-dictionary",
+		Title:           "Paper 1 Dictionary Notes",
+		Description:     "Important Paper 1 terms, definitions, and quick revision points.",
+		Category:        "paper-1-dictionary",
+		Price:           99,
+		OfferPrice:      199,
+		DiscountPercent: 50,
+		FilePath:        "./assets/abc123.pdf",
+	},
+	"commerce-dictionary": {
+		ID:              "commerce-dictionary",
+		Title:           "Commerce Dictionary Notes",
+		Description:     "Commerce terms and definitions arranged for fast recall.",
+		Category:        "commerce-dictionary",
+		Price:           99,
+		OfferPrice:      199,
+		DiscountPercent: 50,
+		FilePath:        "./assets/sample123.pdf",
+	},
+	"paper1-special-notes": {
+		ID:              "paper1-special-notes",
+		Title:           "Paper 1 Special Notes",
+		Description:     "Focused Paper 1 notes for teaching aptitude, research, ICT, and revision.",
+		Category:        "paper-1-special-notes",
+		Price:           149,
+		OfferPrice:      499,
+		DiscountPercent: 70,
+		FilePath:        "./assets/abc123.pdf",
+	},
+	"commerce-special-notes": {
+		ID:              "commerce-special-notes",
+		Title:           "Commerce Special Notes",
+		Description:     "Special Commerce notes for core concepts, short notes, and exam revision.",
+		Category:        "commerce-special-notes",
+		Price:           149,
+		OfferPrice:      499,
+		DiscountPercent: 70,
+		FilePath:        "./assets/sample123.pdf",
 	},
 }
 
@@ -155,6 +210,10 @@ func main() {
 			return
 		}
 		c.JSON(http.StatusOK, content)
+	})
+
+	r.GET("/api/categories", func(c *gin.Context) {
+		c.JSON(http.StatusOK, categories)
 	})
 
 	r.GET("/api/contents", func(c *gin.Context) {

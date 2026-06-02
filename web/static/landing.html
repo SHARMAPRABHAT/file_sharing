@@ -6,7 +6,7 @@
   <title>Neha's Academy | UGC NET Notes & Free Lectures</title>
   <meta
     name="description"
-    content="Neha's Academy is Neha's mentor-led UGC NET preparation site with exam-ready PDF notes, free lectures, reviews, FAQ, and direct purchase support."
+    content="Neha's Academy is Neha's mentor-led UGC NET preparation site with exam-ready notes, free lectures, reviews, FAQ, and direct purchase support."
   />
   <link rel="stylesheet" href="/static/style.css?v=20260527-net-2" />
 </head>
@@ -51,10 +51,10 @@
           <p class="eyebrow">UGC NET Preparation</p>
           <h1>Study with structured notes and clear mentor guidance.</h1>
           <p>
-            Premium PDF notes, focused free lectures, and a calm study system built for aspirants who want clarity before speed.
+            Premium notes, focused free lectures, and a calm study system built for aspirants who want clarity before speed.
           </p>
           <div class="hero-actions">
-            <a id="heroBuyLink" class="btn" href="/buy">Buy PDF Notes</a>
+            <a id="heroBuyLink" class="btn" href="/buy">Buy Notes</a>
             <a class="btn secondary" href="https://www.youtube.com/@NehaS_Academy" target="_blank" rel="noopener">Watch Free Lectures</a>
           </div>
         </div>
@@ -89,22 +89,22 @@
       <article>
         <span>03</span>
         <h2>Free Learning</h2>
-        <p>Use selected lectures before choosing the paid PDF material.</p>
+        <p>Use selected lectures before choosing the paid notes material.</p>
       </article>
     </section>
 
     <section id="notes" class="section-block">
       <div class="section-heading">
         <p class="eyebrow">Featured UGC NET Notes</p>
-        <h2>Pick the PDF set that matches your revision stage.</h2>
+        <h2>Pick the notes set that matches your revision stage.</h2>
         <p>Each card keeps the offer visible with a short description, price, direct purchase, and preview action.</p>
       </div>
 
       <div class="notes-grid" id="notesGrid">
         <article class="note-card loading-card">
           <p class="note-kicker">Loading</p>
-          <h3>Loading PDF notes...</h3>
-          <p>Available PDFs will load from the backend.</p>
+          <h3>Loading notes...</h3>
+          <p>Available notes will load from the backend.</p>
         </article>
       </div>
     </section>
@@ -209,7 +209,7 @@
           <strong>UGC NET Aspirant</strong>
         </article>
         <article>
-          <p>"The lecture style is calm and direct. I could connect the PDF notes with the videos."</p>
+          <p>"The lecture style is calm and direct. I could connect the notes with the videos."</p>
           <strong>Paper I Student</strong>
         </article>
         <article>
@@ -227,8 +227,8 @@
 
       <div class="faq-list">
         <details>
-          <summary>How are the PDF notes delivered?</summary>
-          <p>After payment verification, the secure access link is sent to your email address.</p>
+          <summary>How are the notes delivered?</summary>
+          <p>After payment verification, the purchased notes are sent to your email address.</p>
         </details>
         <details>
           <summary>Can I preview before buying?</summary>
@@ -245,7 +245,7 @@
       <div class="contact-copy">
         <p class="eyebrow">Contact Form</p>
         <h2>Need help choosing notes or videos?</h2>
-        <p>Send a clear question and include the subject, PDF name, or purchase issue so support can respond quickly.</p>
+        <p>Send a clear question and include the subject, notes name, or purchase issue so support can respond quickly.</p>
       </div>
 
       <form id="contactForm" class="contact-form">
@@ -289,23 +289,27 @@
         const data = await response.json();
 
         if (!response.ok || !Array.isArray(data) || data.length === 0) {
-          throw new Error('No PDFs available');
+          throw new Error('No notes available');
         }
 
         const notesGrid = document.getElementById('notesGrid');
         notesGrid.innerHTML = data.slice(0, 3).map((product, index) => {
           const directBuyURL = '/buy/' + encodeURIComponent(product.id);
-          const label = index === 0 ? 'Featured PDF' : index === 1 ? 'Revision PDF' : 'Study PDF';
+          const label = index === 0 ? 'Featured Notes' : index === 1 ? 'Revision Notes' : 'Study Notes';
           const fakePrice = Number(product.offer_price || 0);
           const actualPrice = Number(product.price || 0);
+          const discount = Number(product.discount_percent || 0);
+          const discountHTML = discount > 0 ? `<span class="discount-badge">${discount}% OFF</span>` : '';
           const priceHTML = fakePrice > actualPrice ? `
             <div class="note-price">
               <span class="old-price">Rs. ${fakePrice}</span>
               <span class="current-price">Rs. ${actualPrice}</span>
+              ${discountHTML}
             </div>
           ` : `
             <div class="note-price">
               <span class="current-price">Rs. ${actualPrice}</span>
+              ${discountHTML}
             </div>
           `;
           return `

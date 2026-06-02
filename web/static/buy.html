@@ -3,232 +3,531 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Buy UGC NET PDF Notes</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260527-net-2" />
+  <title>Buy UGC NET Notes</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260602-direct-buy-3" />
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
-<body>
+<body class="buy-flow-body">
   <div class="container buy-page-shell">
     <header class="buy-page-header">
-      <div class="brand">
+      <a class="brand" href="/" aria-label="Neha's Academy home">
         <img class="brand-logo" src="/static/logo.jpg" alt="" aria-hidden="true" />
-      </div>
+      </a>
       <a href="/" class="buy-back-link">Back to home</a>
     </header>
 
-    <div class="buy-layout">
-      <section class="buy-card">
-        <div class="buy-select-panel" id="selectionBlock">
+    <main class="buy-flow">
+      <section class="buy-flow-intro" aria-labelledby="buyIntroTitle">
+        <div class="buy-banner-title">
+          <p class="eyebrow">UGC NET Notes</p>
+          <h1 id="buyIntroTitle">Buy Notes</h1>
+        </div>
+        <div class="buy-help" aria-labelledby="howItWorksTitle">
+          <h2 id="howItWorksTitle">How it works</h2>
+          <ol class="buy-help-points" aria-label="How checkout works">
+            <li><span>1</span> Choose a category.</li>
+            <li><span>2</span> Pick the notes you need.</li>
+            <li><span>3</span> Enter your name, email, and mobile number.</li>
+            <li><span>4</span> Pay securely and receive notes by email.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="direct-buy-page" id="directBuyPage" hidden>
+        <div class="direct-buy-hero">
+          <div class="direct-note-hero">
+            <a class="buy-back-link inline-back" id="directBackLink" href="/buy">Back to all notes</a>
+            <p class="note-kicker" id="directKicker">Selected Notes</p>
+            <h2 id="directTitle">Selected notes</h2>
+            <p id="directDescription">Exam-focused notes.</p>
+            <div class="direct-buy-box">
+              <div>
+                <small>One-time purchase</small>
+                <div class="direct-price" id="directPrice">Rs. --</div>
+              </div>
+              <button class="btn" type="button" id="directBuyBtn">Buy Now</button>
+            </div>
+            <div class="direct-actions">
+              <a class="btn secondary" id="directAllNotesLink" href="/buy">Browse This Category</a>
+            </div>
+          </div>
+
+          <aside class="direct-trust-panel" aria-label="Price and trust details">
+            <p class="eyebrow">Secure Delivery</p>
+            <h3>Simple payment, fast email access.</h3>
+            <ul>
+              <li>Secure payment</li>
+              <li>Email delivery after payment verification</li>
+              <li>Teacher-created content</li>
+              <li>Purchase confirmation sent to your inbox</li>
+            </ul>
+          </aside>
+        </div>
+
+        <div class="direct-detail-grid">
+          <section class="direct-detail-panel" aria-labelledby="directIncludedTitle">
+            <p class="eyebrow">What's Included</p>
+            <h3 id="directIncludedTitle">What you receive</h3>
+            <ul id="directIncludedList"></ul>
+          </section>
+
+          <section class="direct-detail-panel" aria-labelledby="directWhyTitle">
+            <p class="eyebrow">Direct Link</p>
+            <h3 id="directWhyTitle">Quick checkout path</h3>
+            <ul>
+              <li>The selected notes are already loaded</li>
+              <li>No category selection is needed</li>
+              <li>Buyer can review details before paying</li>
+              <li>Related notes stay available below</li>
+            </ul>
+          </section>
+        </div>
+
+        <section class="direct-related-section" aria-labelledby="directRelatedTitle">
+          <div class="buy-section-heading split">
+            <div>
+              <p class="eyebrow">Related Notes</p>
+              <h2 id="directRelatedTitle">More notes in this category</h2>
+            </div>
+          </div>
+          <div class="direct-related-grid" id="directRelatedGrid"></div>
+        </section>
+      </section>
+
+      <section class="buy-flow-section" id="browseCategorySection" aria-labelledby="categoryHeading">
+        <div class="buy-section-heading">
+          <p class="eyebrow">Category Selection</p>
+          <h2 id="categoryHeading">Pick the notes category.</h2>
+        </div>
+        <div class="category-grid" id="categoryGrid" aria-label="Notes categories"></div>
+      </section>
+
+      <section class="buy-flow-section" id="browseNotesSection" aria-labelledby="notesHeading">
+        <div class="buy-section-heading split">
           <div>
-            <label class="label" for="pdfSelect">Select PDF to buy</label>
-            <select id="pdfSelect" class="input" required>
-              <option value="">Loading PDFs...</option>
-            </select>
+            <p class="eyebrow" id="selectedCategoryLabel">Selected Category</p>
+            <!-- <h2 id="notesHeading">Available notes</h2> -->
+            <p id="categoryDescription">Choose notes to continue to checkout.</p>
           </div>
-
-          <p id="contentIdText" class="form-note">
-            Selected PDF details will load automatically.
-          </p>
+          <div class="scroller-actions" aria-label="Notes scroller controls">
+            <button class="icon-btn" type="button" id="scrollPrev" aria-label="Scroll notes left">&lsaquo;</button>
+            <button class="icon-btn" type="button" id="scrollNext" aria-label="Scroll notes right">&rsaquo;</button>
+          </div>
         </div>
 
-        <p class="eyebrow" style="margin-top: 1.15rem;">Purchase overview</p>
-        <h2 id="title">Loading...</h2>
-        <p class="buy-summary" id="desc">Please wait while we load the product details.</p>
-
-        <div class="buy-price-box">
-          <span class="price-label">Your total</span>
-          <span class="buy-price-large" id="price">Rs. --</span>
-        </div>
-
-        <div class="buy-meta-list">
-          <div class="buy-meta-item">Type <strong>PDF</strong></div>
-          <div class="buy-meta-item">Delivery <strong>Email access</strong></div>
-          <!-- <div class="buy-meta-item">Access window <strong>30 minutes</strong></div> -->
-          <!-- <div class="buy-meta-item">Gateway <strong>Razorpay</strong></div> -->
-        </div>
-
-        <ul class="buy-benefits">
-          <li>Secure server-side payment verification before access is granted.</li>
-          <li>Instant email delivery of pdf after confirmation.</li>
-          <!-- <li>Access expires automatically after the short study window.</li> -->
-        </ul>
+        <div class="pdf-scroller" id="pdfScroller" tabindex="0" aria-label="Notes"></div>
+        <p id="pageStatus" class="status-banner" role="status" aria-live="polite"></p>
       </section>
+    </main>
+  </div>
 
-      <section class="buy-card">
-        <p class="eyebrow">Buyer details</p>
-        <h2>Complete your purchase</h2>
-        <p class="buy-summary">
-          Enter your details to proceed to  checkout. Your secure access link will be sent to your email after verification.
-        </p>
+  <div class="checkout-modal" id="checkoutModal" aria-hidden="true">
+    <div class="checkout-backdrop" data-close-modal></div>
+    <section class="checkout-dialog" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+      <button class="modal-close" type="button" data-close-modal aria-label="Close checkout">×</button>
 
-        <form id="buyForm" class="buy-form-grid" style="margin-top: 1rem;">
-          <div class="buy-form-row">
-            <div>
-              <label class="label" for="name">Full name</label>
-              <input class="input" id="name" placeholder="e.g., Neha Sharma" required />
-            </div>
-            <div>
-              <label class="label" for="email">Email address</label>
-              <input class="input" id="email" type="email" placeholder="you@example.com" required />
-            </div>
-          </div>
+      <div class="checkout-summary">
+        <p class="eyebrow">Checkout Popup</p>
+        <h2 id="checkoutTitle">Complete purchase</h2>
+        <p id="checkoutDesc">Selected notes details will appear here.</p>
 
-          <div class="buy-form-row">
-            <div>
-              <label class="label" for="mobile">Mobile number</label>
-              <input class="input" id="mobile" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile" required />
-            </div>
-            <div>
-              <label class="label" for="status">Order status</label>
-              <div id="status" class="status-banner" role="status" aria-live="polite" style="display:none;"></div>
-            </div>
-          </div>
+        <div class="checkout-price-row">
+          <span>
+            <small>Selected notes</small>
+            <strong id="checkoutCategory">UGC NET</strong>
+          </span>
+          <span id="checkoutPrice" class="checkout-price">Rs. --</span>
+        </div>
+      </div>
 
-          <button class="btn" id="payBtn" type="submit">
-            Proceed to Pay
-          </button>
+      <form id="buyForm" class="buy-form-grid">
+        <div class="form-row">
+          <label class="label" for="name">Full name</label>
+          <input class="input" id="name" placeholder="e.g., Neha Sharma" required />
+        </div>
 
-          <p class="form-note">
-            Payment is verified on the server before the access link is issued.<br />
-            If you face any issues, please contact us at <a href="mailto:support@nehasacademy.co.in">support@nehasacademy.co.in</a>.
-          </p>
-        </form>
-      </section>
-    </div>
+        <div class="form-row">
+          <label class="label" for="email">Email address</label>
+          <input class="input" id="email" type="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="form-row">
+          <label class="label" for="mobile">Mobile number</label>
+          <input class="input" id="mobile" type="tel" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile" required />
+        </div>
+
+        <button class="btn" id="payBtn" type="submit">Proceed to secure payment</button>
+        <p class="form-note">Your notes are emailed after payment verification.</p>
+        <p id="status" class="status-banner" role="status" aria-live="polite"></p>
+      </form>
+    </section>
   </div>
 
   <script>
     const API_BASE = "";
-
-    const titleEl = document.getElementById("title");
-    const descEl = document.getElementById("desc");
-    const priceEl = document.getElementById("price");
-    const contentIdText = document.getElementById("contentIdText");
+    const categoryGrid = document.getElementById("categoryGrid");
+    const pdfScroller = document.getElementById("pdfScroller");
+    const selectedCategoryLabel = document.getElementById("selectedCategoryLabel");
+    const categoryDescription = document.getElementById("categoryDescription");
+    const pageStatus = document.getElementById("pageStatus");
+    const buyHelpPoints = document.querySelector(".buy-help-points");
+    const modal = document.getElementById("checkoutModal");
     const payBtn = document.getElementById("payBtn");
-    const selectionBlock = document.getElementById("selectionBlock");
-    const select = document.getElementById("pdfSelect");
 
-    function showStatus(type, text) {
-      const el = document.getElementById("status");
-      el.style.display = "block";
-      el.className = "status-banner";
-      if (type === "ok") {
-        el.classList.add("success");
-      } else if (type === "err") {
-        el.classList.add("error");
-      }
-      el.textContent = text;
-    }
+    const checkoutTitle = document.getElementById("checkoutTitle");
+    const checkoutDesc = document.getElementById("checkoutDesc");
+    const checkoutCategory = document.getElementById("checkoutCategory");
+    const checkoutPrice = document.getElementById("checkoutPrice");
+    const directBuyPage = document.getElementById("directBuyPage");
+    const browseCategorySection = document.getElementById("browseCategorySection");
+    const browseNotesSection = document.getElementById("browseNotesSection");
+    const directBackLink = document.getElementById("directBackLink");
+    const directKicker = document.getElementById("directKicker");
+    const directTitle = document.getElementById("directTitle");
+    const directDescription = document.getElementById("directDescription");
+    const directBuyBtn = document.getElementById("directBuyBtn");
+    const directAllNotesLink = document.getElementById("directAllNotesLink");
+    const directPrice = document.getElementById("directPrice");
+    const directIncludedList = document.getElementById("directIncludedList");
+    const directRelatedGrid = document.getElementById("directRelatedGrid");
+
+    let categories = [];
+    let products = [];
+    let selectedCategoryId = "";
+    let selectedProduct = null;
 
     function getContentId() {
       const parts = location.pathname.split("/").filter(Boolean);
       const last = parts[parts.length - 1];
       if (last && last !== "buy") return last;
-
-      const qs = new URLSearchParams(location.search);
-      return qs.get("content_id");
+      return new URLSearchParams(location.search).get("content_id");
     }
 
-    let selectedContentId = getContentId() || "";
-    payBtn.disabled = true;
+    function getCategoryId() {
+      return new URLSearchParams(location.search).get("category");
+    }
 
-    function setSelectionVisible(visible) {
-      if (selectionBlock) {
-        selectionBlock.style.display = visible ? "block" : "none";
+    function setCategoryInURL(categoryId) {
+      const url = new URL(location.href);
+      url.pathname = "/buy";
+      url.searchParams.delete("content_id");
+      url.searchParams.set("category", categoryId);
+      history.replaceState(null, "", url);
+    }
+
+    function showStatus(type, text) {
+      const el = document.getElementById("status");
+      el.className = "status-banner";
+      if (type === "ok") el.classList.add("success");
+      if (type === "err") el.classList.add("error");
+      el.textContent = text || "";
+    }
+
+    function showPageStatus(type, text) {
+      pageStatus.className = "status-banner";
+      if (type === "ok") pageStatus.classList.add("success");
+      if (type === "err") pageStatus.classList.add("error");
+      pageStatus.textContent = text || "";
+    }
+
+    function productCategory(product) {
+      if (product.category) {
+        const category = categories.find((item) => item.id === product.category);
+        if (category) return category;
       }
+      return categories[0] || { id: "all-notes", title: "All Notes", description: "Choose notes to continue to checkout." };
     }
 
-    async function loadContents() {
-      try {
-        const res = await fetch(API_BASE + "/api/contents");
-        const data = await res.json();
+    function productsForCategory(categoryId) {
+      return products.filter((product) => productCategory(product).id === categoryId);
+    }
 
-        if (!res.ok) {
-          throw new Error(data.error || "Unable to load PDFs");
-        }
-
-        select.innerHTML = "";
-
-        if (!Array.isArray(data) || data.length === 0) {
-          select.innerHTML = '<option value="">No PDFs available</option>';
-          showStatus("err", "No PDFs are currently available.");
-          return;
-        }
-
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.textContent = "Select a PDF";
-        select.appendChild(placeholder);
-
-        data.forEach((item) => {
-          const option = document.createElement("option");
-          option.value = item.id;
-          option.textContent = `${item.title} - Rs. ${item.price}`;
-          select.appendChild(option);
-        });
-
-        if (selectedContentId) {
-          select.value = selectedContentId;
-        }
-      } catch (err) {
-        select.innerHTML = '<option value="">Unable to load PDFs</option>';
-        showStatus("err", err.message);
+    function priceHTML(product) {
+      const fakePrice = Number(product.offer_price || 0);
+      const actualPrice = Number(product.price || 0);
+      if (fakePrice > actualPrice) {
+        return `<span class="old-price">Rs. ${fakePrice}</span><span class="current-price">Rs. ${actualPrice}</span>`;
       }
+      return `<span class="current-price">Rs. ${actualPrice || "--"}</span>`;
     }
 
-    async function loadContent(contentIdToLoad) {
-      if (!contentIdToLoad) {
-        titleEl.textContent = "Select a PDF";
-        descEl.textContent = "Choose a PDF from the dropdown to continue.";
-        priceEl.innerHTML = "Rs. --";
-        contentIdText.textContent = "Select a PDF to begin checkout.";
-        payBtn.disabled = true;
+    function discountHTML(product) {
+      const discount = Number(product.discount_percent || 0);
+      return discount > 0 ? `<span class="discount-badge">${discount}% OFF</span>` : "";
+    }
+
+    function renderCategories() {
+      categoryGrid.innerHTML = categories.map((category) => {
+        const count = productsForCategory(category.id).length;
+        const active = category.id === selectedCategoryId ? " active" : "";
+        return `
+          <button class="category-tile${active}" type="button" data-category="${category.id}">
+            <span>${category.title}</span>
+            <strong>${count} ${count === 1 ? "note" : "notes"}</strong>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderPDFs() {
+      const category = categories.find((item) => item.id === selectedCategoryId) || categories[0];
+      if (!category) {
+        pdfScroller.innerHTML = "";
+        return;
+      }
+      const items = productsForCategory(category.id);
+
+      selectedCategoryLabel.textContent = "Selected Category: " + category.title;
+      categoryDescription.textContent = category.description || "Choose notes to continue to checkout.";
+
+      if (!items.length) {
+        pdfScroller.innerHTML = `
+          <article class="pdf-card empty-state-card">
+            <p class="note-kicker">Coming Soon</p>
+            <h3>No notes in this category yet</h3>
+            <p>Please choose another category from the list above.</p>
+          </article>
+        `;
+        showPageStatus("", "");
         return;
       }
 
+      showPageStatus("", "");
+      pdfScroller.innerHTML = items.map((product, index) => `
+        <article class="pdf-card">
+          <p class="note-kicker">${index === 0 ? "Most Popular" : "Notes"}</p>
+          <h3>${product.title || "Untitled Notes"}</h3>
+          <p>${product.description || "Exam-focused notes."}</p>
+          <div class="note-price">${priceHTML(product)}${discountHTML(product)}</div>
+          <button class="btn small" type="button" data-buy="${product.id}">Buy Now</button>
+        </article>
+      `).join("");
+    }
+
+    function openCheckout(productId) {
+      selectedProduct = products.find((product) => product.id === productId);
+      if (!selectedProduct) return;
+
+      const category = productCategory(selectedProduct);
+      checkoutTitle.textContent = selectedProduct.title || "Complete purchase";
+      checkoutDesc.textContent = selectedProduct.description || "Notes purchase.";
+      checkoutCategory.textContent = category?.title || "Notes";
+      checkoutPrice.innerHTML = priceHTML(selectedProduct) + discountHTML(selectedProduct);
+      showStatus("", "");
+      payBtn.disabled = false;
+
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("modal-open");
+      setTimeout(() => document.getElementById("name").focus(), 80);
+    }
+
+    function closeCheckout() {
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("modal-open");
+    }
+
+    function renderHowItWorks(steps) {
+      buyHelpPoints.innerHTML = steps.map((step, index) => `
+        <li><span>${index + 1}</span> ${step}</li>
+      `).join("");
+    }
+
+    function showBrowseMode() {
+      directBuyPage.hidden = true;
+      browseCategorySection.hidden = false;
+      browseNotesSection.hidden = false;
+      renderHowItWorks([
+        "Choose a category.",
+        "Pick the notes you need.",
+        "Enter your name, email, and mobile number.",
+        "Pay securely and receive notes by email.",
+      ]);
+    }
+
+    function showDirectMode() {
+      directBuyPage.hidden = false;
+      browseCategorySection.hidden = true;
+      browseNotesSection.hidden = true;
+      renderHowItWorks([
+        "Review the selected notes.",
+        "Click Buy Now.",
+        "Enter your name, email, and mobile number.",
+        "Pay securely and receive notes by email.",
+      ]);
+      showPageStatus("", "");
+    }
+
+    async function parseJSONResponse(response, fallbackMessage) {
+      const text = await response.text();
+      if (!text.trim()) return null;
+
       try {
-        const res = await fetch(API_BASE + "/api/content/" + encodeURIComponent(contentIdToLoad));
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "Content not found");
-        }
-
-        selectedContentId = contentIdToLoad;
-        titleEl.textContent = data.title || "Untitled PDF";
-        descEl.textContent = data.description || "Secure PDF purchase.";
-        const fakePrice = Number(data.offer_price || 0);
-        const actualPrice = Number(data.price || 0);
-        priceEl.innerHTML = fakePrice > actualPrice
-          ? `<span class="old-price">Rs. ${fakePrice}</span><span class="current-price">Rs. ${actualPrice}</span>`
-          : `<span class="current-price">Rs. ${actualPrice || "--"}</span>`;
-        contentIdText.textContent = "Content ID: " + contentIdToLoad;
-        payBtn.disabled = false;
+        return JSON.parse(text);
       } catch (err) {
-        showStatus("err", "Failed to load content. " + err.message);
-        payBtn.disabled = true;
+        throw new Error(`${fallbackMessage}: ${text.trim().slice(0, 120)}`);
       }
     }
 
-    if (selectedContentId) {
-      setSelectionVisible(false);
-      contentIdText.textContent = "Content ID: " + selectedContentId;
-      loadContents();
-      loadContent(selectedContentId);
-    } else {
-      setSelectionVisible(true);
-      loadContents();
+    function titleFromId(id) {
+      return String(id || "notes")
+        .split("-")
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
     }
 
-    select.addEventListener("change", () => {
-      loadContent(select.value);
+    function categoriesFromProducts(items) {
+      const map = new Map();
+
+      items.forEach((product) => {
+        const id = product.category || "all-notes";
+        if (!map.has(id)) {
+          map.set(id, {
+            id,
+            title: product.category ? titleFromId(product.category) : "All Notes",
+            description: "Choose notes to continue to checkout.",
+          });
+        }
+      });
+
+      return Array.from(map.values());
+    }
+
+    function renderDirectBuy(product) {
+      const category = productCategory(product);
+      const relatedProducts = products
+        .filter((item) => item.id !== product.id && productCategory(item).id === category.id)
+        .slice(0, 3);
+
+      selectedProduct = product;
+      selectedCategoryId = category.id;
+
+      directBackLink.href = "/buy?category=" + encodeURIComponent(category.id);
+      directKicker.textContent = "Selected Notes";
+      directTitle.textContent = product.title || "Selected notes";
+      directDescription.textContent = product.description || "Exam-focused notes.";
+      directAllNotesLink.href = "/buy?category=" + encodeURIComponent(category.id);
+      directPrice.innerHTML = priceHTML(product) + discountHTML(product);
+
+      directIncludedList.innerHTML = [
+        "Structured revision notes",
+        "Format: PDF",
+        "Category: " + (category.title || "Notes"),
+        "Email delivery after payment verification",
+      ].map((item) => `<li>${item}</li>`).join("");
+
+      if (!relatedProducts.length) {
+        directRelatedGrid.innerHTML = `
+          <article class="pdf-card empty-state-card">
+            <p class="note-kicker">Related Notes</p>
+            <h3>No related notes yet</h3>
+            <p>You can still view all notes in this category.</p>
+            <a class="btn small" href="/buy?category=${encodeURIComponent(category.id)}">View All Notes</a>
+          </article>
+        `;
+      } else {
+        directRelatedGrid.innerHTML = relatedProducts.map((item) => `
+          <article class="pdf-card direct-related-card">
+            <p class="note-kicker">Related Notes</p>
+            <h3>${item.title || "Untitled Notes"}</h3>
+            <p>${item.description || "Exam-focused notes."}</p>
+            <div class="note-price">${priceHTML(item)}${discountHTML(item)}</div>
+            <div class="direct-related-actions">
+              <a class="btn small" href="/buy/${encodeURIComponent(item.id)}">Buy This</a>
+              <a class="btn small secondary" href="/buy/${encodeURIComponent(item.id)}">Direct Link</a>
+            </div>
+          </article>
+        `).join("");
+      }
+
+      showDirectMode();
+    }
+
+    async function loadContents() {
+      showPageStatus("", "Loading notes...");
+      try {
+        const [categoryRes, contentRes] = await Promise.all([
+          fetch(API_BASE + "/api/categories"),
+          fetch(API_BASE + "/api/contents"),
+        ]);
+
+        const contentData = await parseJSONResponse(contentRes, "Unable to load notes");
+        if (!contentRes.ok) throw new Error(contentData?.error || "Unable to load notes");
+        if (!Array.isArray(contentData) || contentData.length === 0) throw new Error("No notes are currently available");
+
+        let categoryData = [];
+        if (categoryRes.ok) {
+          categoryData = await parseJSONResponse(categoryRes, "Unable to load categories");
+          if (!Array.isArray(categoryData)) categoryData = [];
+        }
+
+        products = contentData;
+        categories = categoryData.length ? categoryData : categoriesFromProducts(products);
+        selectedCategoryId = categories[0].id;
+        const directCategoryId = getCategoryId();
+        if (directCategoryId && categories.some((category) => category.id === directCategoryId)) {
+          selectedCategoryId = directCategoryId;
+        }
+        const directContentId = getContentId();
+        const directProduct = products.find((product) => product.id === directContentId);
+        if (directProduct) {
+          renderDirectBuy(directProduct);
+          return;
+        }
+
+        showBrowseMode();
+        renderCategories();
+        renderPDFs();
+      } catch (err) {
+        categoryGrid.innerHTML = "";
+        pdfScroller.innerHTML = "";
+        showPageStatus("err", err.message);
+      }
+    }
+
+    categoryGrid.addEventListener("click", (event) => {
+      const tile = event.target.closest("[data-category]");
+      if (!tile) return;
+      selectedCategoryId = tile.dataset.category;
+      setCategoryInURL(selectedCategoryId);
+      renderCategories();
+      renderPDFs();
+    });
+
+    directBuyBtn.addEventListener("click", () => {
+      if (!selectedProduct) return;
+      openCheckout(selectedProduct.id);
+    });
+
+    pdfScroller.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-buy]");
+      if (!button) return;
+      openCheckout(button.dataset.buy);
+    });
+
+    document.getElementById("scrollPrev").addEventListener("click", () => {
+      pdfScroller.scrollBy({ left: -320, behavior: "smooth" });
+    });
+
+    document.getElementById("scrollNext").addEventListener("click", () => {
+      pdfScroller.scrollBy({ left: 320, behavior: "smooth" });
+    });
+
+    modal.addEventListener("click", (event) => {
+      if (event.target.matches("[data-close-modal]")) closeCheckout();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modal.classList.contains("is-open")) closeCheckout();
     });
 
     document.getElementById("buyForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      if (!selectedContentId) {
-        showStatus("err", "Please select a PDF before continuing.");
+      if (!selectedProduct) {
+        showStatus("err", "Please select notes before continuing.");
         return;
       }
 
@@ -251,15 +550,15 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            content_id: selectedContentId,
+            content_id: selectedProduct.id,
             name,
             email,
             mobile,
           }),
         });
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to create order");
+        const data = await parseJSONResponse(res, "Failed to create order");
+        if (!res.ok) throw new Error(data?.error || "Failed to create order");
 
         const options = {
           key: data.key_id,
@@ -284,7 +583,7 @@
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  content_id: selectedContentId,
+                  content_id: selectedProduct.id,
                   name,
                   email,
                   order_id: response.razorpay_order_id,
@@ -293,16 +592,13 @@
                 }),
               });
 
-              const verifyData = await verifyRes.json();
-              if (!verifyRes.ok || verifyData.status !== "ok") {
-                const message = verifyData.message || verifyData.error || verifyData.details || "Payment verification failed";
+              const verifyData = await parseJSONResponse(verifyRes, "Payment verification failed");
+              if (!verifyRes.ok || verifyData?.status !== "ok") {
+                const message = verifyData?.message || verifyData?.error || verifyData?.details || "Payment verification failed";
                 throw new Error(message);
               }
 
-              showStatus(
-                "ok",
-                "Payment verified successfully. Your secure access link will be sent to your email shortly. Order ID: " + response.razorpay_order_id
-              );
+              showStatus("ok", "Payment verified successfully. Your notes will be sent to your email shortly.");
             } catch (err) {
               showStatus("err", err.message);
             } finally {
@@ -323,6 +619,8 @@
         payBtn.disabled = false;
       }
     });
+
+    loadContents();
   </script>
 </body>
 </html>

@@ -198,7 +198,7 @@ func main() {
 		c.File("./web/static/buy.html")
 	})
 
-	r.GET("/buy/:contentId", func(c *gin.Context) {
+	r.GET("/buy/:category/:contentId", func(c *gin.Context) {
 		c.File("./web/static/buy.html")
 	})
 

@@ -178,14 +178,16 @@ go run ./cmd/server
 ```
 
 Open:
-- `http://localhost:8080/buy/<productId>`
+- `http://localhost:8080/buy/<category>/<productId>`
 
 ---
 
 ## Endpoints (Example)
 
-- `GET /buy/:productId`
+- `GET /buy/:category/:productId`
   - Renders buy page and loads Razorpay Checkout config.
+- `GET /buy/:productId`
+  - Backward-compatible route that also renders the buy page.
 
 - `POST /api/create-order`
   - Creates Razorpay order from backend

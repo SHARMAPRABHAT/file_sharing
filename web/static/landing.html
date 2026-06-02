@@ -294,7 +294,7 @@
 
         const notesGrid = document.getElementById('notesGrid');
         notesGrid.innerHTML = data.slice(0, 3).map((product, index) => {
-          const directBuyURL = '/buy/' + encodeURIComponent(product.id);
+          const directBuyURL = '/buy/' + encodeURIComponent(product.category || 'all-notes') + '/' + encodeURIComponent(product.id);
           const label = index === 0 ? 'Featured Notes' : index === 1 ? 'Revision Notes' : 'Study Notes';
           const fakePrice = Number(product.offer_price || 0);
           const actualPrice = Number(product.price || 0);

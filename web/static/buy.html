@@ -204,6 +204,10 @@
     }
 
     function getCategoryId() {
+      const parts = location.pathname.split("/").filter(Boolean);
+      if (parts.length >= 2 && parts[0] === "buy") {
+        return parts[1];
+      }
       return new URLSearchParams(location.search).get("category");
     }
 
@@ -435,8 +439,8 @@
             <p>${item.description || "Exam-focused notes."}</p>
             <div class="note-price">${priceHTML(item)}${discountHTML(item)}</div>
             <div class="direct-related-actions">
-              <a class="btn small" href="/buy/${encodeURIComponent(item.id)}">Buy This</a>
-              <a class="btn small secondary" href="/buy/${encodeURIComponent(item.id)}">Direct Link</a>
+              <a class="btn small" href="/buy/${encodeURIComponent(category.id)}/${encodeURIComponent(item.id)}">Buy This</a>
+              <a class="btn small secondary" href="/buy/${encodeURIComponent(category.id)}/${encodeURIComponent(item.id)}">Direct Link</a>
             </div>
           </article>
         `).join("");

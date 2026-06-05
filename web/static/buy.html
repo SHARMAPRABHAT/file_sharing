@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Buy UGC NET Notes</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260602-direct-buy-3" />
+  <link rel="stylesheet" href="/static/style.css?v=20260605-mobile-scroller-1" />
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body class="buy-flow-body">
@@ -195,6 +195,8 @@
     let products = [];
     let selectedCategoryId = "";
     let selectedProduct = null;
+    let currentPage = 0;
+    const itemsPerPage = 4;
 
     function getContentId() {
       const parts = location.pathname.split("/").filter(Boolean);
@@ -204,10 +206,6 @@
     }
 
     function getCategoryId() {
-      const parts = location.pathname.split("/").filter(Boolean);
-      if (parts.length >= 2 && parts[0] === "buy") {
-        return parts[1];
-      }
       return new URLSearchParams(location.search).get("category");
     }
 
@@ -273,6 +271,16 @@
       }).join("");
     }
 
+    function updatePageStatus(items) {
+      const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage));
+      if (currentPage >= totalPages) currentPage = totalPages - 1;
+      const start = items.length ? currentPage * itemsPerPage + 1 : 0;
+      const end = Math.min(items.length, (currentPage + 1) * itemsPerPage);
+      showPageStatus("", `Showing ${start}-${end} of ${items.length} notes · Page ${currentPage + 1} of ${totalPages}`);
+      document.getElementById("scrollPrev").disabled = currentPage === 0;
+      document.getElementById("scrollNext").disabled = currentPage >= totalPages - 1;
+    }
+
     function renderPDFs() {
       const category = categories.find((item) => item.id === selectedCategoryId) || categories[0];
       if (!category) {
@@ -296,16 +304,43 @@
         return;
       }
 
-      showPageStatus("", "");
-      pdfScroller.innerHTML = items.map((product, index) => `
-        <article class="pdf-card">
-          <p class="note-kicker">${index === 0 ? "Most Popular" : "Notes"}</p>
-          <h3>${product.title || "Untitled Notes"}</h3>
-          <p>${product.description || "Exam-focused notes."}</p>
-          <div class="note-price">${priceHTML(product)}${discountHTML(product)}</div>
-          <button class="btn small" type="button" data-buy="${product.id}">Buy Now</button>
-        </article>
-      `).join("");
+      const isMobile = window.innerWidth < 981;
+      
+      if (isMobile) {
+        // Mobile: render all items in horizontal scroller, no pagination
+        pdfScroller.innerHTML = items.map((product, index) => `
+          <article class="pdf-card">
+            <p class="note-kicker">${index === 0 ? "Most Popular" : "Notes"}</p>
+            <h3>${product.title || "Untitled Notes"}</h3>
+            <p>${product.description || "Exam-focused notes."}</p>
+            <div class="note-price">${priceHTML(product)}${discountHTML(product)}</div>
+            <button class="btn small" type="button" data-buy="${product.id}">Buy Now</button>
+          </article>
+        `).join("");
+        // Hide pagination on mobile
+        document.getElementById("scrollPrev").style.display = "none";
+        document.getElementById("scrollNext").style.display = "none";
+        showPageStatus("", "");
+      } else {
+        // Desktop: render paginated view
+        const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage));
+        if (currentPage >= totalPages) currentPage = totalPages - 1;
+
+        const visibleItems = items.slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage);
+        pdfScroller.innerHTML = visibleItems.map((product, index) => `
+          <article class="pdf-card">
+            <p class="note-kicker">${index === 0 && currentPage === 0 ? "Most Popular" : "Notes"}</p>
+            <h3>${product.title || "Untitled Notes"}</h3>
+            <p>${product.description || "Exam-focused notes."}</p>
+            <div class="note-price">${priceHTML(product)}${discountHTML(product)}</div>
+            <button class="btn small" type="button" data-buy="${product.id}">Buy Now</button>
+          </article>
+        `).join("");
+        // Show pagination on desktop
+        document.getElementById("scrollPrev").style.display = "inline-grid";
+        document.getElementById("scrollNext").style.display = "inline-grid";
+        updatePageStatus(items);
+      }
     }
 
     function openCheckout(productId) {
@@ -439,8 +474,8 @@
             <p>${item.description || "Exam-focused notes."}</p>
             <div class="note-price">${priceHTML(item)}${discountHTML(item)}</div>
             <div class="direct-related-actions">
-              <a class="btn small" href="/buy/${encodeURIComponent(category.id)}/${encodeURIComponent(item.id)}">Buy This</a>
-              <a class="btn small secondary" href="/buy/${encodeURIComponent(category.id)}/${encodeURIComponent(item.id)}">Direct Link</a>
+              <a class="btn small" href="/buy/${encodeURIComponent(item.id)}">Buy This</a>
+              <a class="btn small secondary" href="/buy/${encodeURIComponent(item.id)}">Direct Link</a>
             </div>
           </article>
         `).join("");
@@ -475,6 +510,10 @@
           selectedCategoryId = directCategoryId;
         }
         const directContentId = getContentId();
+        const pathCategory = categories.find((category) => category.id === directContentId);
+        if (pathCategory) {
+          selectedCategoryId = pathCategory.id;
+        }
         const directProduct = products.find((product) => product.id === directContentId);
         if (directProduct) {
           renderDirectBuy(directProduct);
@@ -495,6 +534,7 @@
       const tile = event.target.closest("[data-category]");
       if (!tile) return;
       selectedCategoryId = tile.dataset.category;
+      currentPage = 0;
       setCategoryInURL(selectedCategoryId);
       renderCategories();
       renderPDFs();
@@ -512,11 +552,20 @@
     });
 
     document.getElementById("scrollPrev").addEventListener("click", () => {
-      pdfScroller.scrollBy({ left: -320, behavior: "smooth" });
+      if (currentPage > 0) {
+        currentPage -= 1;
+        renderPDFs();
+      }
     });
 
     document.getElementById("scrollNext").addEventListener("click", () => {
-      pdfScroller.scrollBy({ left: 320, behavior: "smooth" });
+      const category = categories.find((item) => item.id === selectedCategoryId) || categories[0];
+      const items = productsForCategory(category.id);
+      const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage));
+      if (currentPage < totalPages - 1) {
+        currentPage += 1;
+        renderPDFs();
+      }
     });
 
     modal.addEventListener("click", (event) => {
@@ -622,6 +671,14 @@
         showStatus("err", err.message);
         payBtn.disabled = false;
       }
+    });
+
+    let resizeTimeout;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        renderPDFs();
+      }, 300);
     });
 
     loadContents();

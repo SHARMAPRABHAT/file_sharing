@@ -33,6 +33,7 @@ type Content struct {
 	Price           int    `json:"price"`
 	OfferPrice      int    `json:"offer_price"`
 	DiscountPercent int    `json:"discount_percent"`
+	GoogleDriveID   string `json:"-"`
 	FilePath        string `json:"-"`
 }
 
@@ -67,11 +68,12 @@ type VerifyPaymentReq struct {
 }
 
 type VerifyPaymentResp struct {
-	Status    string `json:"status"`
-	Message   string `json:"message"`
-	AccessURL string `json:"access_url,omitempty"`
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	DownloadLink string `json:"download_link,omitempty"`
 }
 
+// AccessToken deprecated: using Google Drive links instead
 type AccessToken struct {
 	Token     string
 	ContentID string
@@ -114,6 +116,7 @@ var contents = map[string]Content{
 		Price:           49,
 		OfferPrice:      199,
 		DiscountPercent: 75,
+		GoogleDriveID:   "https://drive.google.com/file/d/1G4YvpeS9IVB8YZtAYhGp-nuyFP0Kmyso/view?usp=drive_link",
 		FilePath:        ".assets/paper-1-dictionary/teaching-aptitude-TA.pdf",
 	},
 	"research-aptitude-RA": {
@@ -124,6 +127,7 @@ var contents = map[string]Content{
 		Price:           49,
 		OfferPrice:      199,
 		DiscountPercent: 75,
+		GoogleDriveID:   "https://drive.google.com/file/d/1G4YvpeS9IVB8YZtAYhGp-nuyFP0Kmyso/view?usp=drive_link",
 		FilePath:        ".assets/paper-1-dictionary/research-aptitude-RA.pdf",
 	},
 	"communication": {
@@ -186,74 +190,75 @@ var contents = map[string]Content{
 		DiscountPercent: 79,
 		FilePath:        "./assets/paper-1-dictionary/all-units-combo.pdf",
 	},
-	//	"people-development-environment-eng": {
-	//		ID:              "people-development-environment-eng",
-	//		Title:           "People, Development & Environment",
-	//		Description:     "Master Unit 9 with high-yield theoretical concepts, real-world applications, and latest environmental updates. Includes step-by-step guidance to solve tricky application-based questions easily! (PDF).",
-	//		Category:        "paper-1-special-notes",
-	//		Price:           149,
-	//		OfferPrice:      499,
-	//		DiscountPercent: 70,
-	//		FilePath:        "./assets/paper-1-special-notes/people-development-environment-eng.pdf",
-	//	},
-	//	"people-development-environment-hindi": {
-	//		ID:              "people-development-environment-hindi",
-	//		Title:           "लोग, विकास और पर्यावरण (PDE): स्पेशल नोट्स",
-	//		Description:     "यूनिट 9 पर मजबूत पकड़ बनाएं! इसमें आपको मिलेंगे उच्च स्तरीय सैद्धांतिक विषय, वास्तविक अनुप्रयोग (Applications), और पर्यावरण से जुड़े नवीनतम करंट अफेयर्स। कठिन और एप्लीकेशन-आधारित प्रश्नों को आसानी से हल करने के लिए स्टेप-बाय-स्टेप मार्गदर्शन शामिल है! (PDF).",
-	//		Category:        "paper-1-special-notes",
-	//		Price:           149,
-	//		OfferPrice:      499,
-	//		DiscountPercent: 70,
-	//		FilePath:        "./assets/paper-1-special-notes/people-development-environment-hindi.pdf",
-	//	},
-	//	"people-development-environment-bilingual": {
-	//		ID:    "people-development-environment-bilingual",
-	//		Title: "PDE Special Notes with Application (Bilingual Combo)",
-	//		Description: `Master Unit 9 in your preferred language! Complete theoretical concepts, real-world applications, and latest environment updates provided in both Hindi & English.
-	//
-	// यूनिट 9 पर मजबूत पकड़ बनाएं! इसमें आपको मिलेंगे उच्च स्तरीय सैद्धांतिक विषय, वास्तविक अनुप्रयोग और पर्यावरण के नवीनतम करंट अफेयर्स हिंदी और अंग्रेजी दोनों भाषाओं में। (PDF).`,
-	//
-	//		DiscountPercent: 70,
-	//		Category:        "paper-1-special-notes",
-	//		Price:           199,
-	//		OfferPrice:      599,
-	//		FilePath:        "./assets/paper-1-special-notes/people-development-environment-bilingual.pdf",
-	//	},
-	//	"higher-education-system-eng": {
-	//		ID:              "higher-education-system-eng",
-	//		Title:           "Higher Education System",
-	//		Description:     "Comprehensive notes covering Ancient Education, Pre/Post Independence Committees, NEP 2020, and Governance. Master application-based questions on institutional bodies and latest digital schemes easily! (PDF).",
-	//		Category:        "paper-1-special-notes",
-	//		Price:           149,
-	//		OfferPrice:      499,
-	//		DiscountPercent: 70,
-	//		FilePath:        "./assets/paper-1-special-notes/higher-education-system-eng.pdf",
-	//	},
-	//	"higher-education-system-hindi": {
-	//		ID:              "higher-education-system-hindi",
-	//		Title:           "उच्च शिक्षा प्रणाली (HES): स्पेशल नोट्स",
-	//		Description:     "प्राचीन शिक्षा, स्वतंत्रता से पहले और बाद की समितियां, NEP 2020 और शासन व्यवस्था को कवर करने वाले संपूर्ण नोट्स। विभिन्न संस्थागत निकायों (Institutional Bodies) और सरकार की नवीनतम डिजिटल योजनाओं पर आने वाले एप्लीकेशन-आधारित प्रश्नों को आसानी से हल करना सीखें! (PDF).",
-	//		Category:        "paper-1-special-notes",
-	//		Price:           149,
-	//		OfferPrice:      499,
-	//		DiscountPercent: 70,
-	//		FilePath:        "./assets/paper-1-special-notes/higher-education-system-hindi.pdf",
-	//	},
-	//	"higher-education-system-bilingual": {
-	//		ID:    "higher-education-system-bilingual",
-	//		Title: "HES Special Notes with Application (Bilingual Combo)",
-	//		Description: `Comprehensive notes covering Ancient Education, Committees, NEP 2020, and Governance. Master tricky application-based questions with content available in both Hindi & English.
-	//
-	// प्राचीन शिक्षा, समितियां, NEP 2020 और शासन व्यवस्था को कवर करने वाले संपूर्ण नोट्स। कठिन और एप्लीकेशन-आधारित प्रश्नों को हल करने का तरीका सीखें, अब हिंदी और अंग्रेजी दोनों भाषाओं में उपलब्ध। (PDF).`,
-	//
-	//		Category:        "paper-1-special-notes",
-	//		Price:           149,
-	//		OfferPrice:      499,
-	//		DiscountPercent: 70,
-	//		FilePath:        "./assets/paper-1-special-notes/higher-education-system-bilingual.pdf",
-	//	},
+	"people-development-environment-eng": {
+		ID:              "people-development-environment-eng",
+		Title:           "People, Development & Environment",
+		Description:     "Master Unit 9 with high-yield theoretical concepts, real-world applications, and latest environmental updates. Includes step-by-step guidance to solve tricky application-based questions easily! (PDF).",
+		Category:        "paper-1-special-notes",
+		Price:           149,
+		OfferPrice:      499,
+		DiscountPercent: 70,
+		FilePath:        "./assets/paper-1-special-notes/people-development-environment-eng.pdf",
+	},
+	"people-development-environment-hindi": {
+		ID:              "people-development-environment-hindi",
+		Title:           "लोग, विकास और पर्यावरण (PDE): स्पेशल नोट्स",
+		Description:     "यूनिट 9 पर मजबूत पकड़ बनाएं! इसमें आपको मिलेंगे उच्च स्तरीय सैद्धांतिक विषय, वास्तविक अनुप्रयोग (Applications), और पर्यावरण से जुड़े नवीनतम करंट अफेयर्स। कठिन और एप्लीकेशन-आधारित प्रश्नों को आसानी से हल करने के लिए स्टेप-बाय-स्टेप मार्गदर्शन शामिल है! (PDF).",
+		Category:        "paper-1-special-notes",
+		Price:           149,
+		OfferPrice:      499,
+		DiscountPercent: 70,
+		FilePath:        "./assets/paper-1-special-notes/people-development-environment-hindi.pdf",
+	},
+	"people-development-environment-bilingual": {
+		ID:    "people-development-environment-bilingual",
+		Title: "PDE Special Notes with Application (Bilingual Combo)",
+		Description: `Master Unit 9 in your preferred language! Complete theoretical concepts, real-world applications, and latest environment updates provided in both Hindi & English.
+	
+	यूनिट 9 पर मजबूत पकड़ बनाएं! इसमें आपको मिलेंगे उच्च स्तरीय सैद्धांतिक विषय, वास्तविक अनुप्रयोग और पर्यावरण के नवीनतम करंट अफेयर्स हिंदी और अंग्रेजी दोनों भाषाओं में। (PDF).`,
+
+		DiscountPercent: 70,
+		Category:        "paper-1-special-notes",
+		Price:           199,
+		OfferPrice:      599,
+		FilePath:        "./assets/paper-1-special-notes/people-development-environment-bilingual.pdf",
+	},
+	"higher-education-system-eng": {
+		ID:              "higher-education-system-eng",
+		Title:           "Higher Education System",
+		Description:     "Comprehensive notes covering Ancient Education, Pre/Post Independence Committees, NEP 2020, and Governance. Master application-based questions on institutional bodies and latest digital schemes easily! (PDF).",
+		Category:        "paper-1-special-notes",
+		Price:           149,
+		OfferPrice:      499,
+		DiscountPercent: 70,
+		FilePath:        "./assets/paper-1-special-notes/higher-education-system-eng.pdf",
+	},
+	"higher-education-system-hindi": {
+		ID:              "higher-education-system-hindi",
+		Title:           "उच्च शिक्षा प्रणाली (HES): स्पेशल नोट्स",
+		Description:     "प्राचीन शिक्षा, स्वतंत्रता से पहले और बाद की समितियां, NEP 2020 और शासन व्यवस्था को कवर करने वाले संपूर्ण नोट्स। विभिन्न संस्थागत निकायों (Institutional Bodies) और सरकार की नवीनतम डिजिटल योजनाओं पर आने वाले एप्लीकेशन-आधारित प्रश्नों को आसानी से हल करना सीखें! (PDF).",
+		Category:        "paper-1-special-notes",
+		Price:           149,
+		OfferPrice:      499,
+		DiscountPercent: 70,
+		FilePath:        "./assets/paper-1-special-notes/higher-education-system-hindi.pdf",
+	},
+	"higher-education-system-bilingual": {
+		ID:    "higher-education-system-bilingual",
+		Title: "HES Special Notes with Application (Bilingual Combo)",
+		Description: `Comprehensive notes covering Ancient Education, Committees, NEP 2020, and Governance. Master tricky application-based questions with content available in both Hindi & English.
+	
+	प्राचीन शिक्षा, समितियां, NEP 2020 और शासन व्यवस्था को कवर करने वाले संपूर्ण नोट्स। कठिन और एप्लीकेशन-आधारित प्रश्नों को हल करने का तरीका सीखें, अब हिंदी और अंग्रेजी दोनों भाषाओं में उपलब्ध। (PDF).`,
+
+		Category:        "paper-1-special-notes",
+		Price:           149,
+		OfferPrice:      499,
+		DiscountPercent: 70,
+		FilePath:        "./assets/paper-1-special-notes/higher-education-system-bilingual.pdf",
+	},
 }
 
+// Deprecated: token-based system replaced with Google Drive direct links
 var (
 	tokenStore = map[string]AccessToken{}
 	tokenMu    sync.Mutex
@@ -265,9 +270,6 @@ func main() {
 	}
 
 	port := getenv("APP_PORT", "8080")
-	baseURL := getenv("APP_BASE_URL", "http://localhost:"+port)
-	ttlMinutes := getenvInt("TOKEN_TTL_MINUTES", 30)
-	tokenTTL := time.Duration(ttlMinutes) * time.Minute
 
 	keyID := getenv("RAZORPAY_KEY_ID", "")
 	keySecret := getenv("RAZORPAY_KEY_SECRET", "")
@@ -367,6 +369,10 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Razorpay is not configured"})
 			return
 		}
+		if _, err := deliveryAttachments(content); driveShareLink(content.GoogleDriveID) == "" && err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "delivery is not configured for this content: " + err.Error()})
+			return
+		}
 
 		params := map[string]interface{}{
 			"amount":   content.Price * 100,
@@ -439,64 +445,19 @@ func main() {
 			return
 		}
 
-		token := generateToken()
-		expiresAt := time.Now().Add(tokenTTL)
-		tokenMu.Lock()
-		tokenStore[token] = AccessToken{
-			Token:     token,
-			ContentID: contentID,
-			Email:     buyerEmail,
-			ExpiresAt: expiresAt,
-			PaymentID: req.RazorpayPaymentID,
-			CreatedAt: time.Now(),
-		}
-		tokenMu.Unlock()
+		driveLink := driveShareLink(content.GoogleDriveID)
 
-		accessURL := fmt.Sprintf("%s/access/%s", strings.TrimRight(baseURL, "/"), token)
-		if err := sendDeliveryEmail(resendAPIKey, resendFrom, buyerEmail, buyerName, content, accessURL, expiresAt); err != nil {
+		if err := sendDeliveryEmail(resendAPIKey, resendFrom, buyerEmail, buyerName, content, driveLink); err != nil {
 			c.JSON(http.StatusInternalServerError, VerifyPaymentResp{Status: "failed", Message: "failed to send delivery email: " + err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, VerifyPaymentResp{Status: "ok", Message: "payment verified", AccessURL: accessURL})
+		c.JSON(http.StatusOK, VerifyPaymentResp{Status: "ok", Message: "payment verified, download link sent to email", DownloadLink: driveLink})
 	})
 
+	// Deprecated: Token-based access replaced with Google Drive direct links
 	r.GET("/access/:token", func(c *gin.Context) {
-		token := c.Param("token")
-		tokenMu.Lock()
-		accessToken, ok := tokenStore[token]
-		if !ok {
-			tokenMu.Unlock()
-			c.JSON(http.StatusNotFound, gin.H{"error": "invalid or expired token"})
-			return
-		}
-		if accessToken.Used {
-			tokenMu.Unlock()
-			c.JSON(http.StatusGone, gin.H{"error": "token already used"})
-			return
-		}
-		if time.Now().After(accessToken.ExpiresAt) {
-			delete(tokenStore, token)
-			tokenMu.Unlock()
-			c.JSON(http.StatusNotFound, gin.H{"error": "invalid or expired token"})
-			return
-		}
-		accessToken.Used = true
-		tokenStore[token] = accessToken
-		tokenMu.Unlock()
-
-		content, ok := contents[accessToken.ContentID]
-		if !ok {
-			c.JSON(http.StatusNotFound, gin.H{"error": "content not found"})
-			return
-		}
-		if _, err := os.Stat(content.FilePath); err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "file not available"})
-			return
-		}
-		c.Header("Content-Type", "application/pdf")
-		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filepath.Base(content.FilePath)))
-		c.File(content.FilePath)
+		c.JSON(http.StatusGone, gin.H{"error": "this endpoint is deprecated", "message": "use Google Drive links sent via email instead"})
 	})
 
 	addr := ":" + port
@@ -527,6 +488,14 @@ func getenvInt(key string, fallback int) int {
 		return fallback
 	}
 	return parsed
+}
+
+func driveShareLink(fileID string) string {
+	fileID = strings.TrimSpace(fileID)
+	if fileID == "" || strings.EqualFold(fileID, "REPLACE_WITH_DRIVE_ID") {
+		return ""
+	}
+	return fmt.Sprintf("https://drive.google.com/file/d/%s/view?usp=sharing", fileID)
 }
 
 func randHex(nBytes int) string {
@@ -574,17 +543,12 @@ type resendPayload struct {
 	Attachments []resendAttachment `json:"attachments,omitempty"`
 }
 
-func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content Content, accessURL string, expiresAt time.Time) error {
+func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content Content, driveLink string) error {
 	if resendAPIKey == "" || resendFrom == "" {
 		return fmt.Errorf("Resend is not configured")
 	}
 	if buyerName == "" {
 		buyerName = "there"
-	}
-
-	payload, err := os.ReadFile(content.FilePath)
-	if err != nil {
-		return fmt.Errorf("failed to read attachment: %w", err)
 	}
 
 	templateText, err := os.ReadFile("./web/email_templates/purchase_success.txt")
@@ -599,24 +563,30 @@ func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content C
 
 	var rendered bytes.Buffer
 	if err := tmpl.Execute(&rendered, map[string]string{
-		"BuyerName": buyerName,
-		"Title":     content.Title,
-		"AccessURL": accessURL,
-		"ExpiresAt": expiresAt.Format(time.RFC1123),
+		"BuyerName":    buyerName,
+		"Title":        content.Title,
+		"DownloadLink": driveLink,
 	}); err != nil {
 		return fmt.Errorf("failed to render email template: %w", err)
 	}
 
-	body, err := json.Marshal(resendPayload{
+	payload := resendPayload{
 		From:    resendFrom,
 		To:      []string{to},
-		Subject: "Your purchase is confirmed",
+		Subject: "Your purchase is confirmed - Download link",
 		Text:    rendered.String(),
-		Attachments: []resendAttachment{{
-			Filename: filepath.Base(content.FilePath),
-			Content:  base64Encode(payload),
-		}},
-	})
+	}
+
+	if driveLink == "" {
+		attachments, err := deliveryAttachments(content)
+		if err != nil {
+			return err
+		}
+		payload.Subject = "Your purchase is confirmed - PDF attached"
+		payload.Attachments = attachments
+	}
+
+	body, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal resend payload: %w", err)
 	}
@@ -644,6 +614,77 @@ func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content C
 	}
 
 	return nil
+}
+
+func deliveryAttachments(content Content) ([]resendAttachment, error) {
+	paths, err := deliveryFilePaths(content)
+	if err != nil {
+		return nil, err
+	}
+
+	attachments := make([]resendAttachment, 0, len(paths))
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read local PDF %q: %w", path, err)
+		}
+
+		filename := filepath.Base(path)
+		if filename == "." || filename == string(filepath.Separator) {
+			filename = content.ID + ".pdf"
+		}
+
+		attachments = append(attachments, resendAttachment{
+			Filename: filename,
+			Content:  base64Encode(data),
+		})
+	}
+
+	return attachments, nil
+}
+
+func deliveryFilePaths(content Content) ([]string, error) {
+	path := normalizeAssetPath(content.FilePath)
+	if path != "" && fileExists(path) {
+		return []string{path}, nil
+	}
+
+	if strings.HasSuffix(content.ID, "-bilingual") {
+		prefix := strings.TrimSuffix(content.ID, "-bilingual")
+		dir := filepath.Dir(path)
+		if dir == "." || dir == "" {
+			dir = "./assets/paper-1-special-notes"
+		}
+
+		paths := []string{
+			filepath.Join(dir, prefix+"-eng.pdf"),
+			filepath.Join(dir, prefix+"-hindi.pdf"),
+		}
+		if fileExists(paths[0]) && fileExists(paths[1]) {
+			return paths, nil
+		}
+	}
+
+	if strings.HasPrefix(path, ".assets") {
+		path = normalizeAssetPath(path)
+	}
+	if path == "" {
+		return nil, fmt.Errorf("Google Drive ID is not configured and local PDF path is missing for %s", content.ID)
+	}
+	return nil, fmt.Errorf("Google Drive ID is not configured and local PDF %q does not exist", path)
+}
+
+func normalizeAssetPath(path string) string {
+	path = strings.TrimSpace(path)
+	if strings.HasPrefix(path, ".assets") {
+		return "." + strings.TrimPrefix(path, ".assets")
+	}
+	return path
+}
+
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
 }
 
 func base64Encode(data []byte) string {

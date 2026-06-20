@@ -50,7 +50,8 @@ textarea {
 main,
 .site-footer,
 .site-header,
-.buy-page-shell {
+.buy-page-shell,
+.policy-page {
   width: min(1120px, calc(100% - 32px));
   max-width: calc(100vw - 32px);
   margin: 0 auto;
@@ -845,9 +846,324 @@ h3 {
   color: var(--secondary);
 }
 
+body:not(.buy-flow-body) .site-header {
+  min-height: 62px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+body:not(.buy-flow-body) .brand-logo {
+  width: 180px;
+}
+
+body:not(.buy-flow-body) .top-nav {
+  gap: 13px;
+}
+
+body:not(.buy-flow-body) .nav-cta {
+  padding: 9px 14px;
+}
+
+body:not(.buy-flow-body) .hero-banner {
+  min-height: 360px;
+}
+
+body:not(.buy-flow-body) .hero-inner {
+  min-height: 360px;
+  padding: 28px 32px;
+  gap: 30px;
+  grid-template-columns: minmax(0, 0.98fr) minmax(380px, 0.82fr);
+}
+
+body:not(.buy-flow-body) .hero-copy-block h1 {
+  margin: 10px 0 12px;
+  font-size: clamp(32px, 4vw, 46px);
+  line-height: 1.06;
+}
+
+body:not(.buy-flow-body) .hero-copy-block p:not(.eyebrow) {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+body:not(.buy-flow-body) .hero-actions {
+  margin-top: 20px;
+}
+
+body:not(.buy-flow-body) .hero-brand-watermark {
+  width: min(500px, 45vw);
+  min-height: 230px;
+  margin-right: min(120px, 20vw);
+}
+
+body:not(.buy-flow-body) .hero-brand-watermark img {
+  width: min(260px, 70%);
+}
+
+body:not(.buy-flow-body) .hero-brand-watermark span {
+  font-size: clamp(42px, 5.8vw, 82px);
+}
+
+body:not(.buy-flow-body) .mentor-card {
+  padding: 20px;
+  display: block;
+  text-align: left;
+}
+
+body:not(.buy-flow-body) .mentor-photo {
+  width: 118px;
+  margin: 0 auto 12px;
+}
+
+body:not(.buy-flow-body) .mentor-label {
+  margin-bottom: 9px;
+  padding: 6px 9px;
+}
+
+body:not(.buy-flow-body) .mentor-card h2 {
+  margin-bottom: 4px;
+  font-size: 19px;
+}
+
+body:not(.buy-flow-body) .mentor-bio {
+  margin-bottom: 2px;
+  line-height: 1.55;
+  /* font-size: 13px; */
+}
+
+body:not(.buy-flow-body) .mentor-card ul {
+  grid-template-columns: 1fr;
+  gap: 7px;
+}
+
+body:not(.buy-flow-body) .mentor-card li {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+body:not(.buy-flow-body) .trust-strip {
+  margin-top: 16px;
+  gap: 14px;
+}
+
+body:not(.buy-flow-body) .trust-strip article {
+  padding: 16px 18px;
+}
+
+body:not(.buy-flow-body) .trust-strip h2 {
+  margin: 6px 0 5px;
+  font-size: 18px;
+}
+
+body:not(.buy-flow-body) .trust-strip p,
+body:not(.buy-flow-body) .section-heading p,
+body:not(.buy-flow-body) .note-card p,
+body:not(.buy-flow-body) .about-section p,
+body:not(.buy-flow-body) .trust-cards p,
+body:not(.buy-flow-body) .faq-list p,
+body:not(.buy-flow-body) .contact-copy p {
+  line-height: 1.55;
+}
+
+body:not(.buy-flow-body) .section-block,
+body:not(.buy-flow-body) .about-section,
+body:not(.buy-flow-body) .reviews-section,
+body:not(.buy-flow-body) .contact-section {
+  margin-top: 42px;
+}
+
+body:not(.buy-flow-body) .section-heading {
+  margin-bottom: 16px;
+}
+
+body:not(.buy-flow-body) .section-heading h2,
+body:not(.buy-flow-body) .about-section h2,
+body:not(.buy-flow-body) .contact-copy h2 {
+  margin: 7px 0 7px;
+  font-size: clamp(24px, 2.5vw, 32px);
+}
+
+body:not(.buy-flow-body) .notes-grid,
+body:not(.buy-flow-body) .video-grid {
+  gap: 14px;
+}
+
+body:not(.buy-flow-body) .note-card {
+  min-height: 235px;
+  padding: 18px;
+}
+
+body:not(.buy-flow-body) .note-kicker {
+  margin-bottom: 8px;
+}
+
+body:not(.buy-flow-body) .note-card h3 {
+  margin-bottom: 7px;
+  font-size: 18px;
+}
+
+body:not(.buy-flow-body) .note-price {
+  padding-top: 12px;
+}
+
+body:not(.buy-flow-body) .current-price {
+  font-size: 21px;
+}
+
+body:not(.buy-flow-body) .card-actions {
+  margin-top: 12px;
+}
+
+body:not(.buy-flow-body) .video-card h3 {
+  padding: 12px 16px 14px;
+  font-size: 17px;
+}
+
+body:not(.buy-flow-body) .video-cta {
+  min-height: 190px;
+  padding: 18px;
+}
+
+body:not(.buy-flow-body) .video-cta h3 {
+  margin: 7px 0 12px;
+  font-size: 21px;
+}
+
+body:not(.buy-flow-body) .about-section,
+body:not(.buy-flow-body) .contact-section {
+  padding: 22px;
+  gap: 20px;
+}
+
+body:not(.buy-flow-body) .trust-cards {
+  gap: 10px;
+}
+
+body:not(.buy-flow-body) .trust-cards article {
+  padding: 14px;
+}
+
+body:not(.buy-flow-body) .trust-cards h3 {
+  margin-bottom: 5px;
+}
+
+body:not(.buy-flow-body) .reviews-section {
+  padding: 22px;
+}
+
+body:not(.buy-flow-body) .reviews-grid {
+  gap: 12px;
+}
+
+body:not(.buy-flow-body) .reviews-grid article {
+  padding: 15px;
+}
+
+body:not(.buy-flow-body) .reviews-grid p {
+  margin-bottom: 10px;
+  line-height: 1.55;
+}
+
+body:not(.buy-flow-body) .faq-list {
+  gap: 10px;
+}
+
+body:not(.buy-flow-body) .faq-list details {
+  padding: 14px 16px;
+}
+
+body:not(.buy-flow-body) .contact-form,
+body:not(.buy-flow-body) .form-grid {
+  gap: 12px;
+}
+
+body:not(.buy-flow-body) .input {
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+body:not(.buy-flow-body) textarea.input {
+  min-height: 104px;
+}
+
+body:not(.buy-flow-body) .site-footer {
+  padding: 24px 0;
+}
+
 .buy-page-shell {
+  width: min(1280px, calc(100% - 24px));
+  max-width: 1280px;
   padding-top: 24px;
   padding-bottom: 52px;
+}
+
+.policy-page {
+  padding: 48px 0 64px;
+}
+
+.policy-hero {
+  padding: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, #ffffff 0%, #f8fbff 60%, #eef4ff 100%);
+  box-shadow: var(--shadow-soft);
+}
+
+.policy-hero h1 {
+  margin: 12px 0 14px;
+  max-width: 820px;
+  font-size: clamp(34px, 4vw, 52px);
+  line-height: 1.06;
+}
+
+.policy-hero p:not(.eyebrow) {
+  max-width: 760px;
+  margin: 0;
+  color: var(--body);
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.policy-date {
+  margin-top: 18px !important;
+  color: var(--muted) !important;
+  font-size: 14px !important;
+  font-weight: 900;
+}
+
+.policy-content {
+  margin-top: 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.policy-content article {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.policy-content h2 {
+  margin: 0 0 10px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.policy-content p {
+  margin: 0;
+  color: var(--body);
+  line-height: 1.75;
+}
+
+.policy-content p + p {
+  margin-top: 10px;
 }
 
 .buy-page-header {
@@ -1286,13 +1602,13 @@ h3 {
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .category-tile {
-  min-height: 74px;
-  padding: 11px 12px;
+  min-height: 68px;
+  padding: 12px 14px;
   display: grid;
   align-content: space-between;
   gap: 7px;
@@ -1324,6 +1640,7 @@ h3 {
 .category-tile span {
   font-size: 15px;
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .category-tile strong {
@@ -1359,37 +1676,56 @@ h3 {
 
 .pdf-scroller {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(270px, 31%);
-  gap: 16px;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scroll-snap-type: inline mandatory;
-  padding: 2px 2px 12px;
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
+  gap: 18px;
+  overflow: hidden;
+  padding: 0;
 }
 
 .pdf-card {
-  min-height: 310px;
-  padding: 22px;
+  min-height: 320px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  scroll-snap-align: start;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   background: #ffffff;
-  box-shadow: none;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
 }
 
 .pdf-card h3 {
   margin: 0 0 10px;
   font-size: 22px;
   line-height: 1.18;
+  overflow-wrap: anywhere;
 }
 
 .pdf-card p:not(.note-kicker) {
   margin: 0;
   color: var(--body);
   line-height: 1.65;
+}
+
+.pdf-description {
+  min-height: 78px;
+}
+
+.description-toggle {
+  width: fit-content;
+  margin: 10px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--secondary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 850;
+  text-align: left;
+}
+
+.description-toggle:hover,
+.description-toggle:focus-visible {
+  text-decoration: underline;
 }
 
 .pdf-card .btn {
@@ -1513,7 +1849,21 @@ body.modal-open {
   }
 
   .hero-inner {
-    gap: 26px;
+    gap: 20px;
+    padding: 24px;
+  }
+
+  body:not(.buy-flow-body) .hero-banner,
+  body:not(.buy-flow-body) .hero-inner {
+    min-height: auto;
+  }
+
+  body:not(.buy-flow-body) .hero-inner {
+    grid-template-columns: 1fr;
+  }
+
+  body:not(.buy-flow-body) .mentor-card li {
+    white-space: nowrap;
   }
 
   .buy-flow-intro,
@@ -1536,7 +1886,13 @@ body.modal-open {
   }
 
   .pdf-scroller {
-    grid-auto-columns: minmax(260px, 48%);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    overflow: hidden;
+  }
+
+  .pdf-card {
+    min-width: 0;
   }
 }
 
@@ -1544,7 +1900,8 @@ body.modal-open {
   main,
   .site-footer,
   .site-header,
-  .buy-page-shell {
+  .buy-page-shell,
+  .policy-page {
     width: min(1120px, calc(100% - 24px));
     max-width: calc(100vw - 24px);
   }
@@ -1560,7 +1917,7 @@ body.modal-open {
   }
 
   .brand-logo {
-    width: 144px;
+    width: 136px;
   }
 
   .site-header {
@@ -1568,7 +1925,7 @@ body.modal-open {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 8px;
-    min-height: 70px;
+    min-height: 58px;
   }
 
   .top-nav {
@@ -1631,7 +1988,7 @@ body.modal-open {
   .hero-media {
     align-items: flex-start;
     justify-content: center;
-    padding: 26px 12px;
+    padding: 18px 12px;
   }
 
   .hero-brand-watermark {
@@ -1656,16 +2013,17 @@ body.modal-open {
   .hero-inner {
     width: min(1120px, calc(100% - 24px));
     min-height: auto;
-    padding: 28px 20px;
+    padding: 22px 18px;
   }
 
   .hero-copy-block h1 {
-    font-size: 36px;
+    font-size: 30px;
     line-height: 1.08;
   }
 
   .hero-copy-block p:not(.eyebrow) {
-    font-size: 16px;
+    font-size: 15px;
+    line-height: 1.5;
   }
 
   .hero-actions,
@@ -1684,14 +2042,58 @@ body.modal-open {
   .reviews-section,
   .contact-section,
   .buy-card {
-    padding: 22px;
+    padding: 18px;
   }
 
   .section-block,
   .about-section,
   .reviews-section,
   .contact-section {
-    margin-top: 52px;
+    margin-top: 34px;
+  }
+
+  body:not(.buy-flow-body) .trust-strip {
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  body:not(.buy-flow-body) .trust-strip article {
+    padding: 14px;
+  }
+
+  body:not(.buy-flow-body) .mentor-card {
+    display: block;
+  }
+
+  body:not(.buy-flow-body) .mentor-photo {
+    width: 116px;
+    margin: 0 auto 10px;
+  }
+
+  body:not(.buy-flow-body) .mentor-card ul {
+    grid-template-columns: 1fr;
+  }
+
+  body:not(.buy-flow-body) .mentor-card li {
+    font-size: 14px;
+  }
+
+  body:not(.buy-flow-body) .section-heading {
+    margin-bottom: 12px;
+  }
+
+  body:not(.buy-flow-body) .section-heading h2,
+  body:not(.buy-flow-body) .about-section h2,
+  body:not(.buy-flow-body) .contact-copy h2 {
+    font-size: 25px;
+  }
+
+  body:not(.buy-flow-body) .note-card {
+    min-height: 0;
+  }
+
+  body:not(.buy-flow-body) .video-cta {
+    min-height: 0;
   }
 
   .video-grid,
@@ -1715,6 +2117,19 @@ body.modal-open {
 
   .buy-flow-intro h1 {
     font-size: 29px;
+  }
+
+  .pdf-scroller {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pdf-card {
+    min-width: 0;
+    width: 100%;
   }
 
   .direct-note-hero,
@@ -1743,7 +2158,7 @@ body.modal-open {
 
   .category-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
@@ -1767,21 +2182,36 @@ body.modal-open {
   }
 
   .buy-section-heading.split {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .scroller-actions {
-    width: 100%;
+    width: auto;
+    display: flex;
+    gap: 10px;
   }
 
   .icon-btn {
-    flex: 1 1 0;
-    border-radius: 8px;
+    flex: 0 0 auto;
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
   }
 
   .pdf-scroller {
-    grid-auto-columns: minmax(244px, 88%);
+    grid-template-columns: 1fr;
+    gap: 14px;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pdf-card {
+    min-width: 0;
+    width: 100%;
   }
 
   .checkout-modal {

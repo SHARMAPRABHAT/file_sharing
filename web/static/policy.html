@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Privacy Policy | Neha's Academy</title>
+  <meta
+    name="description"
+    content="Privacy Policy for Neha's Academy covering information collection, payments, email delivery, contact support, and user rights."
+  />
+  <link rel="stylesheet" href="/static/style.css?v=20260620-policy-1" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Neha's Academy home">
+      <img class="brand-logo" src="/static/logo.jpg" alt="" aria-hidden="true" />
+    </a>
+
+    <div class="header-actions">
+      <a class="nav-cta" href="/buy">Buy Notes</a>
+      <button class="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="primaryNav">
+        <span class="nav-toggle-icon" aria-hidden="true"></span>
+        <span class="nav-toggle-text">Menu</span>
+      </button>
+    </div>
+
+    <nav id="primaryNav" class="top-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/buy">Notes</a>
+      <a href="/#videos">Videos</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/#contact">Contact</a>
+    </nav>
+  </header>
+
+  <main class="policy-page">
+    <section class="policy-hero">
+      <p class="eyebrow">Privacy Policy</p>
+      <h1>How Neha's Academy handles your information.</h1>
+      <p>
+        This policy explains what information we collect, how it is used, and the choices you have when you use our website, buy notes, or contact us for support.
+      </p>
+      <p class="policy-date">Last updated: 20 June 2026</p>
+    </section>
+
+    <section class="policy-content" aria-label="Privacy policy details">
+      <article>
+        <h2>Information We Collect</h2>
+        <p>When you place an order or submit a contact form, we may collect your name, email address, mobile number, selected product, payment/order reference, and the message you send to us.</p>
+        <p>We may also receive basic technical information such as your browser type, device information, and server logs needed to keep the website secure and working properly.</p>
+      </article>
+
+      <article>
+        <h2>How We Use Your Information</h2>
+        <p>We use your information to process purchases, verify payments, deliver purchased notes by email or Google Drive access, respond to support requests, prevent misuse, and improve the website experience.</p>
+        <p>We do not sell your personal information.</p>
+      </article>
+
+      <article>
+        <h2>Payments</h2>
+        <p>Payments are processed through Razorpay. We do not store your card, UPI, net banking, or wallet credentials on our website. Payment information is handled according to Razorpay's own policies and security practices.</p>
+      </article>
+
+      <article>
+        <h2>Email and Delivery Services</h2>
+        <p>We may use email delivery services such as Resend to send purchase confirmations, download links, and support replies. If Google Drive delivery is used, your email address may be added as a viewer for the purchased study material.</p>
+      </article>
+
+      <article>
+        <h2>Sharing of Information</h2>
+        <p>We share information only with service providers needed to run the site, process payments, deliver purchased content, maintain records, or comply with legal requirements.</p>
+      </article>
+
+      <article>
+        <h2>Data Retention</h2>
+        <p>We keep order, delivery, and support records for as long as reasonably necessary for customer service, accounting, fraud prevention, and legal compliance.</p>
+      </article>
+
+      <article>
+        <h2>Your Choices</h2>
+        <p>You can contact us to request correction or deletion of your personal information, subject to records we are required or permitted to keep for legal, tax, payment, security, or dispute purposes.</p>
+      </article>
+
+      <article>
+        <h2>Security</h2>
+        <p>We use reasonable safeguards to protect your information. However, no website or online transmission can be guaranteed to be completely secure.</p>
+      </article>
+
+      <article>
+        <h2>Children's Privacy</h2>
+        <p>Our website is intended for exam preparation users and is not directed at children below 13 years of age. We do not knowingly collect personal information from children below 13.</p>
+      </article>
+
+      <article>
+        <h2>Changes to This Policy</h2>
+        <p>We may update this policy when our website, services, or legal requirements change. The latest version will always be available on this page.</p>
+      </article>
+
+      <article>
+        <h2>Contact Us</h2>
+        <p>For privacy questions or requests, please use the contact form on the website and include enough detail for us to identify your request.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; <span id="year"></span> Neha's Academy. Structured UGC NET preparation.</p>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/buy">Notes</a>
+      <a href="/policy">Privacy Policy</a>
+      <a href="/#contact">Contact</a>
+    </div>
+  </footer>
+
+  <script>
+    const navToggle = document.querySelector('.nav-toggle');
+    const primaryNav = document.getElementById('primaryNav');
+
+    navToggle.addEventListener('click', function () {
+      const isOpen = primaryNav.classList.toggle('is-open');
+      navToggle.setAttribute('aria-expanded', String(isOpen));
+      navToggle.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+      navToggle.querySelector('.nav-toggle-text').textContent = isOpen ? 'Close' : 'Menu';
+    });
+
+    primaryNav.addEventListener('click', function (event) {
+      if (event.target.tagName !== 'A') return;
+      primaryNav.classList.remove('is-open');
+      navToggle.setAttribute('aria-expanded', 'false');
+      navToggle.setAttribute('aria-label', 'Open navigation menu');
+      navToggle.querySelector('.nav-toggle-text').textContent = 'Menu';
+    });
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

@@ -8,7 +8,7 @@
     name="description"
     content="Neha's Academy is Neha's mentor-led UGC NET preparation site with exam-ready notes, free lectures, reviews, FAQ, and direct purchase support."
   />
-  <link rel="stylesheet" href="/static/style.css?v=20260527-net-2" />
+  <link rel="stylesheet" href="/static/style.css?v=20260620-watermark-center-1" />
 </head>
 <body>
   <header class="site-header" id="home">
@@ -278,6 +278,7 @@
       <a href="#notes">Notes</a>
       <a href="#videos">Videos</a>
       <a href="#faq">FAQ</a>
+      <a href="/policy">Privacy Policy</a>
       <a href="#contact">Contact</a>
     </div>
   </footer>
@@ -294,7 +295,7 @@
 
         const notesGrid = document.getElementById('notesGrid');
         notesGrid.innerHTML = data.slice(0, 3).map((product, index) => {
-          const directBuyURL = '/buy/' + encodeURIComponent(product.category || 'all-notes') + '/' + encodeURIComponent(product.id);
+          const directBuyURL = '/buy/' + encodeURIComponent(product.id);
           const label = index === 0 ? 'Featured Notes' : index === 1 ? 'Revision Notes' : 'Study Notes';
           const fakePrice = Number(product.offer_price || 0);
           const actualPrice = Number(product.price || 0);
@@ -330,12 +331,13 @@
       }
     }
 
-    document.getElementById('contactForm').addEventListener('submit', function (event) {
+    document.getElementById('contactForm').addEventListener('submit', async function (event) {
       event.preventDefault();
       const status = document.getElementById('contactStatus');
       const name = document.getElementById('contactName').value.trim();
       const email = document.getElementById('contactEmail').value.trim();
       const message = document.getElementById('contactMessage').value.trim();
+      const submitButton = event.target.querySelector('button[type="submit"]');
 
       if (!name || !email || !message) {
         status.textContent = 'Please complete all fields before sending.';
@@ -343,9 +345,30 @@
         return;
       }
 
-      status.textContent = `Thanks ${name}. Your message has been received and we will reply at ${email}.`;
-      status.className = 'contact-status success';
-      event.target.reset();
+      status.textContent = 'Saving your message...';
+      status.className = 'contact-status';
+      submitButton.disabled = true;
+
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, message }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || 'Unable to save your message right now.');
+        }
+
+        status.textContent = `Thanks ${name}. Your message has been saved and we will reply at ${email}.`;
+        status.className = 'contact-status success';
+        event.target.reset();
+      } catch (error) {
+        status.textContent = error.message;
+        status.className = 'contact-status error';
+      } finally {
+        submitButton.disabled = false;
+      }
     });
 
     const navToggle = document.querySelector('.nav-toggle');

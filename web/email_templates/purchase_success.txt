@@ -4,6 +4,18 @@ Thank you for your purchase. Your order has been confirmed successfully.
 
 Product: {{.Title}}
 
-A copy of the purchased PDF is attached to this email.
+{{if .Links}}
+Your PDF download link{{if gt (len .Links) 1}}s are{{else}} is{{end}} ready on Google Drive:
+
+{{range .Links}}
+- {{.Title}}: {{.URL}}
+{{end}}
+
+Click the link{{if gt (len .Links) 1}}s{{end}} above to access your purchased notes.
+{{else}}
+Your purchased PDF is attached to this email.
+
+Open the attachment to access your purchased notes.
+{{end}}
 
 If you need any assistance, please contact our support team.

@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -34,7 +35,13 @@ type Content struct {
 	OfferPrice      int    `json:"offer_price"`
 	DiscountPercent int    `json:"discount_percent"`
 	GoogleDriveID   string `json:"-"`
+	GoogleDriveIDs  []GoogleDriveLink
 	FilePath        string `json:"-"`
+}
+
+type GoogleDriveLink struct {
+	Title string
+	ID    string
 }
 
 type Category struct {
@@ -71,6 +78,18 @@ type VerifyPaymentResp struct {
 	Status       string `json:"status"`
 	Message      string `json:"message"`
 	DownloadLink string `json:"download_link,omitempty"`
+}
+
+type DriveOAuthConfig struct {
+	ClientID     string
+	ClientSecret string
+	RefreshToken string
+}
+
+type ContactReq struct {
+	Name    string `json:"name"`
+	Email   string `json:"email"`
+	Message string `json:"message"`
 }
 
 // AccessToken deprecated: using Google Drive links instead
@@ -127,7 +146,7 @@ var contents = map[string]Content{
 		Price:           49,
 		OfferPrice:      199,
 		DiscountPercent: 75,
-		GoogleDriveID:   "https://drive.google.com/file/d/1G4YvpeS9IVB8YZtAYhGp-nuyFP0Kmyso/view?usp=drive_link",
+		GoogleDriveID:   "https://drive.google.com/file/d/1zHJjE3ETURKBzaoVMCiAZVvX_U_effxs/view?usp=drive_link",
 		FilePath:        ".assets/paper-1-dictionary/research-aptitude-RA.pdf",
 	},
 	"communication": {
@@ -138,6 +157,7 @@ var contents = map[string]Content{
 		Price:           49,
 		OfferPrice:      199,
 		DiscountPercent: 75,
+		GoogleDriveID:   "https://drive.google.com/file/d/1L1fNOTfOKCrJNGT3T_Q5P8Cab6FyAgRD/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-dictionary/communication.pdf",
 	},
 	"logical-reasoning-LR": {
@@ -148,6 +168,7 @@ var contents = map[string]Content{
 		Price:           49,
 		OfferPrice:      199,
 		DiscountPercent: 75,
+		GoogleDriveID:   "https://drive.google.com/file/d/1CoHFvFCr16j1fLdskonLp1gR7uFlp5iQ/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-dictionary/logical-reasoning-LR.pdf",
 	},
 	"information-communication-technology-ICT": {
@@ -158,6 +179,7 @@ var contents = map[string]Content{
 		Price:           49,
 		OfferPrice:      199,
 		DiscountPercent: 75,
+		GoogleDriveID:   "https://drive.google.com/file/d/1E_zMzMObBKsI5MUvfSAfN01oFckelAzt/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-dictionary/information-communication-technology-ICT.pdf",
 	},
 	"people-development-environment-PDE": {
@@ -168,6 +190,7 @@ var contents = map[string]Content{
 		Price:           49,
 		OfferPrice:      199,
 		DiscountPercent: 75,
+		GoogleDriveID:   "https://drive.google.com/file/d/1MzIlyXjUT3L_vZVtEG_KXSgwQVFwQaNC/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-dictionary/people-development-environment-PDE.pdf",
 	},
 	"higher-education-system-HES": {
@@ -178,6 +201,7 @@ var contents = map[string]Content{
 		Price:           49,
 		OfferPrice:      199,
 		DiscountPercent: 75,
+		GoogleDriveID:   "https://drive.google.com/file/d/1RexzDnF83huZUc4HJGVmBf4sn6GCupx2/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-dictionary/higher-education-system-HES.pdf",
 	},
 	"all-units-combo": {
@@ -188,7 +212,16 @@ var contents = map[string]Content{
 		Price:           299,
 		OfferPrice:      1399,
 		DiscountPercent: 79,
-		FilePath:        "./assets/paper-1-dictionary/all-units-combo.pdf",
+		GoogleDriveIDs: []GoogleDriveLink{
+			{Title: "Teaching Aptitude Dictionary", ID: "https://drive.google.com/file/d/1G4YvpeS9IVB8YZtAYhGp-nuyFP0Kmyso/view?usp=drive_link"},
+			{Title: "Research Aptitude Dictionary", ID: "https://drive.google.com/file/d/1zHJjE3ETURKBzaoVMCiAZVvX_U_effxs/view?usp=drive_link"},
+			{Title: "Communication Core Terms Dictionary", ID: "https://drive.google.com/file/d/1L1fNOTfOKCrJNGT3T_Q5P8Cab6FyAgRD/view?usp=drive_link"},
+			{Title: "Logical Reasoning Cheatsheet", ID: "https://drive.google.com/file/d/1CoHFvFCr16j1fLdskonLp1gR7uFlp5iQ/view?usp=drive_link"},
+			{Title: "ICT Glossary & Abbreviations", ID: "https://drive.google.com/file/d/1E_zMzMObBKsI5MUvfSAfN01oFckelAzt/view?usp=drive_link"},
+			{Title: "People & Environment Facts", ID: "https://drive.google.com/file/d/1MzIlyXjUT3L_vZVtEG_KXSgwQVFwQaNC/view?usp=drive_link"},
+			{Title: "Higher Education Quick Guide", ID: "https://drive.google.com/file/d/1RexzDnF83huZUc4HJGVmBf4sn6GCupx2/view?usp=drive_link"},
+		},
+		FilePath: "./assets/paper-1-dictionary/all-units-combo.pdf",
 	},
 	"people-development-environment-eng": {
 		ID:              "people-development-environment-eng",
@@ -198,6 +231,7 @@ var contents = map[string]Content{
 		Price:           149,
 		OfferPrice:      499,
 		DiscountPercent: 70,
+		GoogleDriveID:   "https://drive.google.com/file/d/1AAb_TU90eYCW61Xiedu6fx_st6T9v5WG/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-special-notes/people-development-environment-eng.pdf",
 	},
 	"people-development-environment-hindi": {
@@ -208,6 +242,7 @@ var contents = map[string]Content{
 		Price:           149,
 		OfferPrice:      499,
 		DiscountPercent: 70,
+		GoogleDriveID:   "https://drive.google.com/file/d/1DAwwX2-fWMmwcQCIm9hxozlwuFqRYbwZ/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-special-notes/people-development-environment-hindi.pdf",
 	},
 	"people-development-environment-bilingual": {
@@ -221,7 +256,11 @@ var contents = map[string]Content{
 		Category:        "paper-1-special-notes",
 		Price:           199,
 		OfferPrice:      599,
-		FilePath:        "./assets/paper-1-special-notes/people-development-environment-bilingual.pdf",
+		GoogleDriveIDs: []GoogleDriveLink{
+			{Title: "People, Development & Environment (English)", ID: "https://drive.google.com/file/d/1AAb_TU90eYCW61Xiedu6fx_st6T9v5WG/view?usp=drive_link"},
+			{Title: "लोग, विकास और पर्यावरण (हिंदी)", ID: "https://drive.google.com/file/d/1DAwwX2-fWMmwcQCIm9hxozlwuFqRYbwZ/view?usp=drive_link"},
+		},
+		FilePath: "./assets/paper-1-special-notes/people-development-environment-bilingual.pdf",
 	},
 	"higher-education-system-eng": {
 		ID:              "higher-education-system-eng",
@@ -231,6 +270,7 @@ var contents = map[string]Content{
 		Price:           149,
 		OfferPrice:      499,
 		DiscountPercent: 70,
+		GoogleDriveID:   "https://drive.google.com/file/d/1qD0QvSmdj_9hxiDjPM2AjqWUUyQOlfLg/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-special-notes/higher-education-system-eng.pdf",
 	},
 	"higher-education-system-hindi": {
@@ -241,6 +281,7 @@ var contents = map[string]Content{
 		Price:           149,
 		OfferPrice:      499,
 		DiscountPercent: 70,
+		GoogleDriveID:   "https://drive.google.com/file/d/1Gy9vaIfD46RYeZQIxAL74eqGHUhQA0wv/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-special-notes/higher-education-system-hindi.pdf",
 	},
 	"higher-education-system-bilingual": {
@@ -255,6 +296,10 @@ var contents = map[string]Content{
 		OfferPrice:      499,
 		DiscountPercent: 70,
 		FilePath:        "./assets/paper-1-special-notes/higher-education-system-bilingual.pdf",
+		GoogleDriveIDs: []GoogleDriveLink{
+			{Title: "Higher Education System (English)", ID: "https://drive.google.com/file/d/1qD0QvSmdj_9hxiDjPM2AjqWUUyQOlfLg/view?usp=drive_link"},
+			{Title: "उच्च शिक्षा प्रणाली (हिंदी)", ID: "https://drive.google.com/file/d/1Gy9vaIfD46RYeZQIxAL74eqGHUhQA0wv/view?usp=drive_link"},
+		},
 	},
 }
 
@@ -275,6 +320,12 @@ func main() {
 	keySecret := getenv("RAZORPAY_KEY_SECRET", "")
 	resendAPIKey := getenv("RESEND_API_KEY", "")
 	resendFrom := getenv("RESEND_FROM", "")
+	contactSheetWebhookURL := getenv("CONTACT_SHEET_WEBHOOK_URL", "")
+	driveOAuth := DriveOAuthConfig{
+		ClientID:     getenv("GOOGLE_DRIVE_CLIENT_ID", ""),
+		ClientSecret: getenv("GOOGLE_DRIVE_CLIENT_SECRET", ""),
+		RefreshToken: getenv("GOOGLE_DRIVE_REFRESH_TOKEN", ""),
+	}
 
 	var razorpayClient *razorpay.Client
 	if keyID != "" && keySecret != "" {
@@ -286,6 +337,12 @@ func main() {
 
 	if resendAPIKey == "" || resendFrom == "" {
 		log.Printf("⚠️ Resend is not fully configured; payment verification will fail until RESEND_API_KEY and RESEND_FROM are set")
+	}
+	if contactSheetWebhookURL == "" {
+		log.Printf("⚠️ CONTACT_SHEET_WEBHOOK_URL is not set; contact form submissions will fail until configured")
+	}
+	if !driveOAuth.Configured() {
+		log.Printf("⚠️ Google Drive OAuth is not fully configured; buyer-specific Drive viewer permissions will be skipped")
 	}
 
 	r := gin.New()
@@ -300,6 +357,10 @@ func main() {
 
 	r.GET("/", func(c *gin.Context) {
 		c.File("./web/static/landing.html")
+	})
+
+	r.GET("/policy", func(c *gin.Context) {
+		c.File("./web/static/policy.html")
 	})
 
 	r.GET("/buy", func(c *gin.Context) {
@@ -330,6 +391,43 @@ func main() {
 			list = append(list, content)
 		}
 		c.JSON(http.StatusOK, list)
+	})
+
+	r.POST("/api/contact", func(c *gin.Context) {
+		var req ContactReq
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON body"})
+			return
+		}
+
+		req.Name = strings.TrimSpace(req.Name)
+		req.Email = strings.TrimSpace(req.Email)
+		req.Message = strings.TrimSpace(req.Message)
+
+		if len(req.Name) < 2 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+			return
+		}
+		if !strings.Contains(req.Email, "@") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "valid email is required"})
+			return
+		}
+		if len(req.Message) < 5 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "message is required"})
+			return
+		}
+		if contactSheetWebhookURL == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "contact sheet is not configured"})
+			return
+		}
+
+		if err := appendContactToSheet(contactSheetWebhookURL, req); err != nil {
+			log.Printf("failed to save contact form submission: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save contact details"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "contact details saved"})
 	})
 
 	r.POST("/api/create-order", func(c *gin.Context) {
@@ -369,7 +467,7 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Razorpay is not configured"})
 			return
 		}
-		if _, err := deliveryAttachments(content); driveShareLink(content.GoogleDriveID) == "" && err != nil {
+		if _, err := deliveryAttachments(content); len(deliveryLinks(content)) == 0 && err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "delivery is not configured for this content: " + err.Error()})
 			return
 		}
@@ -377,11 +475,12 @@ func main() {
 		params := map[string]interface{}{
 			"amount":   content.Price * 100,
 			"currency": "INR",
-			"receipt":  "purchase_" + req.ContentID + "_" + randHex(6),
+			"receipt":  razorpayReceipt(req.ContentID),
 		}
 
 		body, err := razorpayClient.Order.Create(params, nil)
 		if err != nil {
+			log.Printf("failed to create Razorpay order for content_id=%q: %v", req.ContentID, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create Razorpay order"})
 			return
 		}
@@ -445,9 +544,21 @@ func main() {
 			return
 		}
 
-		driveLink := driveShareLink(content.GoogleDriveID)
+		links := deliveryLinks(content)
+		driveLink := ""
+		if len(links) > 0 {
+			driveLink = links[0].URL
+		}
 
-		if err := sendDeliveryEmail(resendAPIKey, resendFrom, buyerEmail, buyerName, content, driveLink); err != nil {
+		if driveOAuth.Configured() {
+			if err := grantDriveViewerAccess(driveOAuth, content, buyerEmail); err != nil {
+				log.Printf("failed to grant Drive viewer access for content_id=%q email=%q: %v", content.ID, buyerEmail, err)
+				c.JSON(http.StatusInternalServerError, VerifyPaymentResp{Status: "failed", Message: "payment verified but failed to grant Drive access"})
+				return
+			}
+		}
+
+		if err := sendDeliveryEmail(resendAPIKey, resendFrom, buyerEmail, buyerName, content, links); err != nil {
 			c.JSON(http.StatusInternalServerError, VerifyPaymentResp{Status: "failed", Message: "failed to send delivery email: " + err.Error()})
 			return
 		}
@@ -495,7 +606,162 @@ func driveShareLink(fileID string) string {
 	if fileID == "" || strings.EqualFold(fileID, "REPLACE_WITH_DRIVE_ID") {
 		return ""
 	}
+	if strings.HasPrefix(fileID, "http://") || strings.HasPrefix(fileID, "https://") {
+		return fileID
+	}
 	return fmt.Sprintf("https://drive.google.com/file/d/%s/view?usp=sharing", fileID)
+}
+
+func driveFileIDs(content Content) []string {
+	seen := map[string]bool{}
+	ids := make([]string, 0)
+	add := func(value string) {
+		id := extractDriveFileID(value)
+		if id == "" || seen[id] {
+			return
+		}
+		seen[id] = true
+		ids = append(ids, id)
+	}
+
+	add(content.GoogleDriveID)
+	for _, link := range content.GoogleDriveIDs {
+		add(link.ID)
+	}
+	return ids
+}
+
+func extractDriveFileID(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" || strings.EqualFold(value, "REPLACE_WITH_DRIVE_ID") {
+		return ""
+	}
+	if !strings.HasPrefix(value, "http://") && !strings.HasPrefix(value, "https://") {
+		return value
+	}
+
+	parsed, err := url.Parse(value)
+	if err != nil {
+		return ""
+	}
+	parts := strings.Split(strings.Trim(parsed.Path, "/"), "/")
+	for i, part := range parts {
+		if part == "d" && i+1 < len(parts) {
+			return parts[i+1]
+		}
+	}
+	if id := parsed.Query().Get("id"); id != "" {
+		return id
+	}
+	return ""
+}
+
+func (cfg DriveOAuthConfig) Configured() bool {
+	return strings.TrimSpace(cfg.ClientID) != "" &&
+		strings.TrimSpace(cfg.ClientSecret) != "" &&
+		strings.TrimSpace(cfg.RefreshToken) != ""
+}
+
+func googleDriveAccessToken(cfg DriveOAuthConfig) (string, error) {
+	form := url.Values{}
+	form.Set("client_id", cfg.ClientID)
+	form.Set("client_secret", cfg.ClientSecret)
+	form.Set("refresh_token", cfg.RefreshToken)
+	form.Set("grant_type", "refresh_token")
+
+	req, err := http.NewRequest(http.MethodPost, "https://oauth2.googleapis.com/token", strings.NewReader(form.Encode()))
+	if err != nil {
+		return "", fmt.Errorf("failed to create Google OAuth request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to refresh Google access token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read Google OAuth response: %w", err)
+	}
+	if resp.StatusCode >= 300 {
+		return "", fmt.Errorf("Google OAuth error (%d): %s", resp.StatusCode, strings.TrimSpace(string(responseBody)))
+	}
+
+	var tokenResp struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.Unmarshal(responseBody, &tokenResp); err != nil {
+		return "", fmt.Errorf("failed to parse Google OAuth response: %w", err)
+	}
+	if tokenResp.AccessToken == "" {
+		return "", fmt.Errorf("Google OAuth response did not include an access token")
+	}
+	return tokenResp.AccessToken, nil
+}
+
+func grantDriveViewerAccess(cfg DriveOAuthConfig, content Content, email string) error {
+	fileIDs := driveFileIDs(content)
+	if len(fileIDs) == 0 {
+		return nil
+	}
+
+	accessToken, err := googleDriveAccessToken(cfg)
+	if err != nil {
+		return err
+	}
+	for _, fileID := range fileIDs {
+		if err := grantDriveFileViewer(accessToken, fileID, email); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func grantDriveFileViewer(accessToken, fileID, email string) error {
+	payload := map[string]string{
+		"type":         "user",
+		"role":         "reader",
+		"emailAddress": email,
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal Drive permission payload: %w", err)
+	}
+
+	endpoint := "https://www.googleapis.com/drive/v3/files/" + url.PathEscape(fileID) + "/permissions?supportsAllDrives=true&sendNotificationEmail=false"
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to create Drive permission request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to call Drive permissions API for %s: %w", fileID, err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read Drive permissions response for %s: %w", fileID, err)
+	}
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("Drive permissions API error for %s (%d): %s", fileID, resp.StatusCode, strings.TrimSpace(string(responseBody)))
+	}
+	return nil
+}
+
+func razorpayReceipt(contentID string) string {
+	contentID = strings.TrimSpace(contentID)
+	if len(contentID) > 14 {
+		contentID = contentID[:14]
+	}
+	return "purchase_" + contentID + "_" + randHex(6)
 }
 
 func randHex(nBytes int) string {
@@ -530,9 +796,51 @@ func isValidMobile10(m string) bool {
 	return true
 }
 
+func appendContactToSheet(webhookURL string, contact ContactReq) error {
+	payload := map[string]string{
+		"submitted_at": time.Now().Format(time.RFC3339),
+		"name":         contact.Name,
+		"email":        contact.Email,
+		"message":      contact.Message,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal contact payload: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, webhookURL, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to create contact sheet request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to call contact sheet webhook: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read contact sheet response: %w", err)
+	}
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("contact sheet webhook error (%d): %s", resp.StatusCode, strings.TrimSpace(string(responseBody)))
+	}
+
+	return nil
+}
+
 type resendAttachment struct {
 	Filename string `json:"filename"`
 	Content  string `json:"content"`
+}
+
+type deliveryLink struct {
+	Title string
+	URL   string
 }
 
 type resendPayload struct {
@@ -543,7 +851,7 @@ type resendPayload struct {
 	Attachments []resendAttachment `json:"attachments,omitempty"`
 }
 
-func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content Content, driveLink string) error {
+func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content Content, links []deliveryLink) error {
 	if resendAPIKey == "" || resendFrom == "" {
 		return fmt.Errorf("Resend is not configured")
 	}
@@ -562,10 +870,10 @@ func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content C
 	}
 
 	var rendered bytes.Buffer
-	if err := tmpl.Execute(&rendered, map[string]string{
-		"BuyerName":    buyerName,
-		"Title":        content.Title,
-		"DownloadLink": driveLink,
+	if err := tmpl.Execute(&rendered, map[string]interface{}{
+		"BuyerName": buyerName,
+		"Title":     content.Title,
+		"Links":     links,
 	}); err != nil {
 		return fmt.Errorf("failed to render email template: %w", err)
 	}
@@ -577,7 +885,7 @@ func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content C
 		Text:    rendered.String(),
 	}
 
-	if driveLink == "" {
+	if len(links) == 0 {
 		attachments, err := deliveryAttachments(content)
 		if err != nil {
 			return err
@@ -614,6 +922,30 @@ func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content C
 	}
 
 	return nil
+}
+
+func deliveryLinks(content Content) []deliveryLink {
+	if len(content.GoogleDriveIDs) > 0 {
+		links := make([]deliveryLink, 0, len(content.GoogleDriveIDs))
+		for _, item := range content.GoogleDriveIDs {
+			link := driveShareLink(item.ID)
+			if link == "" {
+				continue
+			}
+			title := strings.TrimSpace(item.Title)
+			if title == "" {
+				title = content.Title
+			}
+			links = append(links, deliveryLink{Title: title, URL: link})
+		}
+		return links
+	}
+
+	link := driveShareLink(content.GoogleDriveID)
+	if link == "" {
+		return nil
+	}
+	return []deliveryLink{{Title: content.Title, URL: link}}
 }
 
 func deliveryAttachments(content Content) ([]resendAttachment, error) {

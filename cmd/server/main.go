@@ -797,8 +797,13 @@ func isValidMobile10(m string) bool {
 }
 
 func appendContactToSheet(webhookURL string, contact ContactReq) error {
+	ist, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		ist = time.FixedZone("IST", 5*60*60+30*60)
+	}
+
 	payload := map[string]string{
-		"submitted_at": time.Now().Format("02/01/2006 15:04:05"),
+		"submitted_at": time.Now().In(ist).Format("02/01/2006 15:04:05"),
 		"name":         contact.Name,
 		"email":        contact.Email,
 		"message":      contact.Message,

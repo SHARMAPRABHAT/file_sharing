@@ -798,7 +798,7 @@ func isValidMobile10(m string) bool {
 
 func appendContactToSheet(webhookURL string, contact ContactReq) error {
 	payload := map[string]string{
-		"submitted_at": time.Now().Format(time.RFC3339),
+		"submitted_at": time.Now().Format("02/01/2006 15:04:05"),
 		"name":         contact.Name,
 		"email":        contact.Email,
 		"message":      contact.Message,

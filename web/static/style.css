@@ -314,8 +314,7 @@ main,
   text-transform: uppercase;
 }
 
-.hero-banner .eyebrow,
-.reviews-section .eyebrow {
+.hero-banner .eyebrow {
   color: #93c5fd;
 }
 
@@ -696,43 +695,142 @@ h3 {
 }
 
 .reviews-section {
-  padding: 34px;
-  border-radius: var(--radius);
-  background:
-    radial-gradient(circle at 92% 90%, rgba(245, 158, 11, 0.18), transparent 24%),
-    linear-gradient(135deg, var(--primary-deep), #1a0f0f);
-  box-shadow: var(--shadow);
+  padding: 0;
 }
 
-.section-heading.invert h2 {
-  color: #ffffff;
-}
-
-.section-heading.invert p {
-  color: #bfdbfe;
-}
-
-.reviews-grid {
+.reviews-scroller {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(300px, 1fr);
   gap: 18px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline mandatory;
+  padding: 2px 2px 14px;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
-.reviews-grid article {
-  padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.08);
+.reviews-scroller::-webkit-scrollbar {
+  height: 10px;
 }
 
-.reviews-grid p {
-  margin: 0 0 16px;
-  color: #e2e8f0;
-  line-height: 1.7;
+.reviews-scroller::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.reviews-grid strong {
-  color: #ffffff;
+.reviews-scroller::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--border-strong);
+}
+
+.review-card {
+  position: relative;
+  min-height: 285px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+  scroll-snap-align: start;
+}
+
+.review-card::before {
+  content: "\201C";
+  position: absolute;
+  top: 92px;
+  right: 18px;
+  color: rgba(29, 78, 216, 0.12);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 72px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.review-top {
+  margin: -6px -6px 16px;
+  padding: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.review-image {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.review-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.featured-review {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+}
+
+.review-rating {
+  color: var(--gold);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.reviews-scroller .review-quote {
+  margin: 16px 0 22px;
+  position: relative;
+  z-index: 1;
+  color: var(--heading);
+  font-size: 16px;
+  font-weight: 750;
+  line-height: 1.72;
+}
+
+.review-person {
+  min-width: 0;
+}
+
+.review-person strong,
+.review-person span {
+  display: block;
+}
+
+.review-person strong {
+  color: var(--heading);
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.review-person span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.review-tag {
+  width: fit-content;
+  margin-top: 8px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .faq-list {
@@ -1051,19 +1149,32 @@ body:not(.buy-flow-body) .trust-cards h3 {
 }
 
 body:not(.buy-flow-body) .reviews-section {
-  padding: 22px;
+  padding: 0;
 }
 
-body:not(.buy-flow-body) .reviews-grid {
+body:not(.buy-flow-body) .reviews-scroller {
+  gap: 12px;
+  grid-auto-columns: minmax(285px, 34%);
+}
+
+body:not(.buy-flow-body) .review-card {
+  min-height: 255px;
+  padding: 18px;
+}
+
+body:not(.buy-flow-body) .review-image {
+  width: 54px;
+  height: 54px;
+}
+
+body:not(.buy-flow-body) .review-top {
+  margin: -4px -4px 12px;
+  padding: 9px;
   gap: 12px;
 }
 
-body:not(.buy-flow-body) .reviews-grid article {
-  padding: 15px;
-}
-
-body:not(.buy-flow-body) .reviews-grid p {
-  margin-bottom: 10px;
+body:not(.buy-flow-body) .reviews-scroller .review-quote {
+  margin: 12px 0 16px;
   line-height: 1.55;
 }
 
@@ -1842,10 +1953,16 @@ body.modal-open {
   .trust-strip,
   .notes-grid,
   .about-section,
-  .reviews-grid,
+  .reviews-scroller,
   .contact-section,
   .buy-layout {
     grid-template-columns: 1fr;
+  }
+
+  .reviews-scroller {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(280px, 86%);
   }
 
   .hero-inner {

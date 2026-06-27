@@ -231,7 +231,7 @@ var contents = map[string]Content{
 		Price:           149,
 		OfferPrice:      499,
 		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1AAb_TU90eYCW61Xiedu6fx_st6T9v5WG/view?usp=drive_link",
+		GoogleDriveID:   "https://drive.google.com/file/d/1FCi8_TmiUMj5l0hkfXFTK_cJ9OCdiUko/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-special-notes/people-development-environment-eng.pdf",
 	},
 	"people-development-environment-hindi": {
@@ -242,7 +242,7 @@ var contents = map[string]Content{
 		Price:           149,
 		OfferPrice:      499,
 		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1DAwwX2-fWMmwcQCIm9hxozlwuFqRYbwZ/view?usp=drive_link",
+		GoogleDriveID:   "https://drive.google.com/file/d/1KVClqjrUi4eTuvdJXJT4uhM2HNQscdEe/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-special-notes/people-development-environment-hindi.pdf",
 	},
 	"people-development-environment-bilingual": {
@@ -257,8 +257,8 @@ var contents = map[string]Content{
 		Price:           199,
 		OfferPrice:      599,
 		GoogleDriveIDs: []GoogleDriveLink{
-			{Title: "People, Development & Environment (English)", ID: "https://drive.google.com/file/d/1AAb_TU90eYCW61Xiedu6fx_st6T9v5WG/view?usp=drive_link"},
-			{Title: "लोग, विकास और पर्यावरण (हिंदी)", ID: "https://drive.google.com/file/d/1DAwwX2-fWMmwcQCIm9hxozlwuFqRYbwZ/view?usp=drive_link"},
+			{Title: "People, Development & Environment (English)", ID: "https://drive.google.com/file/d/1FCi8_TmiUMj5l0hkfXFTK_cJ9OCdiUko/view?usp=drive_link"},
+			{Title: "लोग, विकास और पर्यावरण (हिंदी)", ID: "https://drive.google.com/file/d/1KVClqjrUi4eTuvdJXJT4uhM2HNQscdEe/view?usp=drive_link"},
 		},
 		FilePath: "./assets/paper-1-special-notes/people-development-environment-bilingual.pdf",
 	},
@@ -270,7 +270,7 @@ var contents = map[string]Content{
 		Price:           149,
 		OfferPrice:      499,
 		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1qD0QvSmdj_9hxiDjPM2AjqWUUyQOlfLg/view?usp=drive_link",
+		GoogleDriveID:   "https://drive.google.com/file/d/1IM1MZhCxhuSx3k3BD8dcojeBZ5juIa33/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-special-notes/higher-education-system-eng.pdf",
 	},
 	"higher-education-system-hindi": {
@@ -281,7 +281,7 @@ var contents = map[string]Content{
 		Price:           149,
 		OfferPrice:      499,
 		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1Gy9vaIfD46RYeZQIxAL74eqGHUhQA0wv/view?usp=drive_link",
+		GoogleDriveID:   "https://drive.google.com/file/d/1c1nlUoOR9DMC0i77FlWnI5yNA0lI6_D_/view?usp=drive_link",
 		FilePath:        "./assets/paper-1-special-notes/higher-education-system-hindi.pdf",
 	},
 	"higher-education-system-bilingual": {
@@ -297,8 +297,8 @@ var contents = map[string]Content{
 		DiscountPercent: 70,
 		FilePath:        "./assets/paper-1-special-notes/higher-education-system-bilingual.pdf",
 		GoogleDriveIDs: []GoogleDriveLink{
-			{Title: "Higher Education System (English)", ID: "https://drive.google.com/file/d/1qD0QvSmdj_9hxiDjPM2AjqWUUyQOlfLg/view?usp=drive_link"},
-			{Title: "उच्च शिक्षा प्रणाली (हिंदी)", ID: "https://drive.google.com/file/d/1Gy9vaIfD46RYeZQIxAL74eqGHUhQA0wv/view?usp=drive_link"},
+			{Title: "Higher Education System (English)", ID: "https://drive.google.com/file/d/1IM1MZhCxhuSx3k3BD8dcojeBZ5juIa33/view?usp=drive_link"},
+			{Title: "उच्च शिक्षा प्रणाली (हिंदी)", ID: "https://drive.google.com/file/d/1c1nlUoOR9DMC0i77FlWnI5yNA0lI6_D_/view?usp=drive_link"},
 		},
 	},
 }

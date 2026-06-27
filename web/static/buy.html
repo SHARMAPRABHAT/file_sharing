@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Buy UGC NET Notes</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260611-desc-toggle-1" />
+  <link rel="stylesheet" href="/static/style.css?v=20260627-compact-buy-6" />
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body class="buy-flow-body">
@@ -20,15 +20,15 @@
       <section class="buy-flow-intro" aria-labelledby="buyIntroTitle">
         <div class="buy-banner-title">
           <p class="eyebrow">UGC NET Notes</p>
-          <h1 id="buyIntroTitle">Buy Notes</h1>
+          <h1 id="buyIntroTitle">Choose exam-ready notes</h1>
         </div>
         <div class="buy-help" aria-labelledby="howItWorksTitle">
           <h2 id="howItWorksTitle">How it works</h2>
           <ol class="buy-help-points" aria-label="How checkout works">
             <li><span>1</span> Choose a category.</li>
-            <li><span>2</span> Pick the notes you need.</li>
-            <li><span>3</span> Enter your name, email, and mobile number.</li>
-            <li><span>4</span> Pay securely and receive notes by email.</li>
+            <li><span>2</span> Pick your notes.</li>
+            <li><span>3</span> Add contact details.</li>
+            <li><span>4</span> Pay and receive by email.</li>
           </ol>
         </div>
       </section>
@@ -94,15 +94,18 @@
         </section>
       </section>
 
-      <section class="buy-flow-section" id="browseCategorySection" aria-labelledby="categoryHeading">
-        <div class="buy-section-heading">
-          <p class="eyebrow">Category Selection</p>
-          <h2 id="categoryHeading">Pick the notes category.</h2>
+      <section class="buy-flow-section compact-catalog-section" id="browseCategorySection" aria-labelledby="categoryHeading">
+        <div class="buy-section-heading compact-catalog-heading">
+          <div>
+            <p class="eyebrow">Browse Notes</p>
+            <h2 id="categoryHeading">Pick a category.</h2>
+          </div>
+          <p>Compare price and checkout from any card.</p>
         </div>
         <div class="category-grid" id="categoryGrid" aria-label="Notes categories"></div>
       </section>
 
-      <section class="buy-flow-section" id="browseNotesSection" aria-labelledby="notesHeading">
+      <section class="buy-flow-section compact-notes-section" id="browseNotesSection" aria-labelledby="notesHeading">
         <div class="buy-section-heading split">
           <div>
             <p class="eyebrow" id="selectedCategoryLabel">Selected Category</p>
@@ -196,11 +199,6 @@
     let selectedCategoryId = "";
     let selectedProduct = null;
     let currentPage = 0;
-    function itemsPerPage() {
-      if (window.innerWidth < 721) return 1;
-      if (window.innerWidth < 981) return 2;
-      return 4;
-    }
 
     function getContentId() {
       const parts = location.pathname.split("/").filter(Boolean);
@@ -303,14 +301,21 @@
     }
 
     function updatePageStatus(items) {
-      const pageSize = itemsPerPage();
-      const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-      if (currentPage >= totalPages) currentPage = totalPages - 1;
-      const start = items.length ? currentPage * pageSize + 1 : 0;
-      const end = Math.min(items.length, (currentPage + 1) * pageSize);
-      showPageStatus("", `Showing ${start}-${end} of ${items.length} notes · Page ${currentPage + 1} of ${totalPages}`);
-      document.getElementById("scrollPrev").disabled = currentPage === 0;
-      document.getElementById("scrollNext").disabled = currentPage >= totalPages - 1;
+      showPageStatus("", `${items.length} ${items.length === 1 ? "note" : "notes"} available - scroll to browse`);
+      updateScrollButtons();
+    }
+
+    function updateScrollButtons() {
+      const maxScroll = Math.max(0, pdfScroller.scrollWidth - pdfScroller.clientWidth - 2);
+      document.getElementById("scrollPrev").disabled = pdfScroller.scrollLeft <= 2;
+      document.getElementById("scrollNext").disabled = pdfScroller.scrollLeft >= maxScroll;
+    }
+
+    function scrollCards(direction) {
+      const card = pdfScroller.querySelector(".pdf-card");
+      const gap = 12;
+      const amount = card ? card.getBoundingClientRect().width + gap : pdfScroller.clientWidth * 0.85;
+      pdfScroller.scrollBy({ left: direction * amount, behavior: "smooth" });
     }
 
     function renderPDFs() {
@@ -336,20 +341,19 @@
         return;
       }
 
-      const pageSize = itemsPerPage();
-      const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-      if (currentPage >= totalPages) currentPage = totalPages - 1;
-
-      const visibleItems = items.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
-      pdfScroller.innerHTML = visibleItems.map((product, index) => `
+      pdfScroller.innerHTML = items.map((product, index) => `
         <article class="pdf-card">
-          <p class="note-kicker">${index === 0 && currentPage === 0 ? "Most Popular" : "Notes"}</p>
+          <div class="pdf-card-top">
+            <p class="note-kicker">${index === 0 ? "Most Popular" : "Notes"}</p>
+            ${discountHTML(product)}
+          </div>
           <h3>${escapeHTML(product.title || "Untitled Notes")}</h3>
           ${descriptionHTML(product)}
-          <div class="note-price">${priceHTML(product)}${discountHTML(product)}</div>
+          <div class="note-price">${priceHTML(product)}</div>
           <button class="btn small" type="button" data-buy="${product.id}">Buy Now</button>
         </article>
       `).join("");
+      pdfScroller.scrollLeft = 0;
       document.getElementById("scrollPrev").style.display = "inline-grid";
       document.getElementById("scrollNext").style.display = "inline-grid";
       updatePageStatus(items);
@@ -576,20 +580,15 @@
     });
 
     document.getElementById("scrollPrev").addEventListener("click", () => {
-      if (currentPage > 0) {
-        currentPage -= 1;
-        renderPDFs();
-      }
+      scrollCards(-1);
     });
 
     document.getElementById("scrollNext").addEventListener("click", () => {
-      const category = categories.find((item) => item.id === selectedCategoryId) || categories[0];
-      const items = productsForCategory(category.id);
-      const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage()));
-      if (currentPage < totalPages - 1) {
-        currentPage += 1;
-        renderPDFs();
-      }
+      scrollCards(1);
+    });
+
+    pdfScroller.addEventListener("scroll", () => {
+      window.requestAnimationFrame(updateScrollButtons);
     });
 
     modal.addEventListener("click", (event) => {

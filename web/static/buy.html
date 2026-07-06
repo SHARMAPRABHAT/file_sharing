@@ -161,8 +161,32 @@
 
         <button class="btn" id="payBtn" type="submit">Proceed to secure payment</button>
         <p class="form-note">Your notes are emailed after payment verification.</p>
+        <p class="form-note">All sales are final. No refunds are available after purchase.</p>
         <p id="status" class="status-banner" role="status" aria-live="polite"></p>
       </form>
+    </section>
+  </div>
+
+  <div class="checkout-modal" id="successModal" aria-hidden="true">
+    <div class="checkout-backdrop" data-close-modal></div>
+    <section class="checkout-dialog" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+      <button class="modal-close" type="button" data-close-modal aria-label="Close success message">×</button>
+
+      <div class="checkout-summary">
+        <p class="eyebrow">Purchase Complete</p>
+        <h2 id="successTitle">Thank you for your purchase</h2>
+        <p>Your notes have been purchased successfully and will be delivered to your email address shortly. Please check your inbox and spam folder.</p>
+        <div class="checkout-price-row">
+          <span>
+            <small>Order complete</small>
+            <strong id="successCategory">UGC NET Notes</strong>
+          </span>
+        </div>
+        <div class="success-actions">
+          <a class="btn" href="/buy">Back to notes</a>
+          <button class="btn outline" type="button" data-close-modal>Continue browsing</button>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -175,6 +199,7 @@
     const pageStatus = document.getElementById("pageStatus");
     const buyHelpPoints = document.querySelector(".buy-help-points");
     const modal = document.getElementById("checkoutModal");
+    const successModal = document.getElementById("successModal");
     const payBtn = document.getElementById("payBtn");
 
     const checkoutTitle = document.getElementById("checkoutTitle");
@@ -398,6 +423,19 @@
     function closeCheckout() {
       modal.classList.remove("is-open");
       modal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("modal-open");
+    }
+
+    function showSuccessModal() {
+      successModal.classList.add("is-open");
+      successModal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("modal-open");
+    }
+
+    function closeModal() {
+      closeCheckout();
+      successModal.classList.remove("is-open");
+      successModal.setAttribute("aria-hidden", "true");
       document.body.classList.remove("modal-open");
     }
 
@@ -625,12 +663,16 @@
       window.requestAnimationFrame(updateScrollButtons);
     });
 
-    modal.addEventListener("click", (event) => {
-      if (event.target.matches("[data-close-modal]")) closeCheckout();
+    [modal, successModal].forEach((dialog) => {
+      dialog.addEventListener("click", (event) => {
+        if (event.target.matches("[data-close-modal]")) closeModal();
+      });
     });
 
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && modal.classList.contains("is-open")) closeCheckout();
+      if (event.key === "Escape" && (modal.classList.contains("is-open") || successModal.classList.contains("is-open"))) {
+        closeModal();
+      }
     });
 
     document.getElementById("buyForm").addEventListener("submit", async (e) => {
@@ -708,6 +750,8 @@
                 throw new Error(message);
               }
 
+              closeCheckout();
+              showSuccessModal();
               showStatus("ok", "Payment verified successfully. Your notes will be sent to your email shortly.");
             } catch (err) {
               showStatus("err", err.message);

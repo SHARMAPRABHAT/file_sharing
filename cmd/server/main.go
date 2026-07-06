@@ -386,9 +386,9 @@ var contents = map[string]Content{
 // contentOrder defines the sequence of contents as they should appear on the webpage
 var contentOrder = []string{
 	"free-sample-paper-1-special-notes",
-	"free-sample-paper-1-dictionary",
 	"teaching-aptitude-TA",
 	"people-development-environment-eng",
+	"free-sample-paper-1-dictionary",
 	"research-aptitude-RA",
 	"communication",
 	"logical-reasoning-LR",

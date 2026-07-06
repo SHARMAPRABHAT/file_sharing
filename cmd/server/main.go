@@ -254,8 +254,8 @@ var contents = map[string]Content{
 
 		DiscountPercent: 70,
 		Category:        "paper-1-special-notes",
-		Price:           199,
-		OfferPrice:      599,
+		Price:           249,
+		OfferPrice:      849,
 		GoogleDriveIDs: []GoogleDriveLink{
 			{Title: "People, Development & Environment (English)", ID: "https://drive.google.com/file/d/1FCi8_TmiUMj5l0hkfXFTK_cJ9OCdiUko/view?usp=drive_link"},
 			{Title: "लोग, विकास और पर्यावरण (हिंदी)", ID: "https://drive.google.com/file/d/1KVClqjrUi4eTuvdJXJT4uhM2HNQscdEe/view?usp=drive_link"},
@@ -292,8 +292,8 @@ var contents = map[string]Content{
 	प्राचीन शिक्षा, समितियां, NEP 2020 और शासन व्यवस्था को कवर करने वाले संपूर्ण नोट्स। कठिन और एप्लीकेशन-आधारित प्रश्नों को हल करने का तरीका सीखें, अब हिंदी और अंग्रेजी दोनों भाषाओं में उपलब्ध। (PDF).`,
 
 		Category:        "paper-1-special-notes",
-		Price:           149,
-		OfferPrice:      499,
+		Price:           249,
+		OfferPrice:      849,
 		DiscountPercent: 70,
 		FilePath:        "./assets/paper-1-special-notes/higher-education-system-bilingual.pdf",
 		GoogleDriveIDs: []GoogleDriveLink{

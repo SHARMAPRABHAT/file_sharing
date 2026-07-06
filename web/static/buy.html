@@ -249,6 +249,11 @@
     function priceHTML(product) {
       const fakePrice = Number(product.offer_price || 0);
       const actualPrice = Number(product.price || 0);
+      const isFree = actualPrice === 0;
+      
+      if (isFree) {
+        return `<span class="current-price">FREE</span>`;
+      }
       if (fakePrice > actualPrice) {
         return `<span class="old-price">Rs. ${fakePrice}</span><span class="current-price">Rs. ${actualPrice}</span>`;
       }
@@ -341,7 +346,12 @@
         return;
       }
 
-      pdfScroller.innerHTML = items.map((product, index) => `
+      pdfScroller.innerHTML = items.map((product, index) => {
+        const isFree = Number(product.price || 0) === 0;
+        const buttonHTML = isFree
+          ? `<a class="btn small" href="${product.google_drive_id}" target="_blank" rel="noopener noreferrer">Free Preview</a>`
+          : `<button class="btn small" type="button" data-buy="${product.id}">Buy Now</button>`;
+        return `
         <article class="pdf-card">
           <div class="pdf-card-top">
             <p class="note-kicker">${index === 0 ? "Most Popular" : "Notes"}</p>
@@ -350,9 +360,10 @@
           <h3>${escapeHTML(product.title || "Untitled Notes")}</h3>
           ${descriptionHTML(product)}
           <div class="note-price">${priceHTML(product)}</div>
-          <button class="btn small" type="button" data-buy="${product.id}">Buy Now</button>
+          ${buttonHTML}
         </article>
-      `).join("");
+      `;
+      }).join("");
       pdfScroller.scrollLeft = 0;
       document.getElementById("scrollPrev").style.display = "inline-grid";
       document.getElementById("scrollNext").style.display = "inline-grid";
@@ -362,6 +373,13 @@
     function openCheckout(productId) {
       selectedProduct = products.find((product) => product.id === productId);
       if (!selectedProduct) return;
+      
+      // For free items, open the Google Drive link directly
+      const isFree = Number(selectedProduct.price || 0) === 0;
+      if (isFree && selectedProduct.google_drive_id) {
+        window.open(selectedProduct.google_drive_id, '_blank');
+        return;
+      }
 
       const category = productCategory(selectedProduct);
       checkoutTitle.textContent = selectedProduct.title || "Complete purchase";
@@ -465,6 +483,10 @@
       directDescription.textContent = product.description || "Exam-focused notes.";
       directAllNotesLink.href = "/buy?category=" + encodeURIComponent(category.id);
       directPrice.innerHTML = priceHTML(product) + discountHTML(product);
+      
+      // Update button text based on price
+      const isFree = Number(product.price || 0) === 0;
+      directBuyBtn.textContent = isFree ? 'Free Preview' : 'Buy Now';
 
       directIncludedList.innerHTML = [
         "Structured revision notes",
@@ -483,17 +505,23 @@
           </article>
         `;
       } else {
-        directRelatedGrid.innerHTML = relatedProducts.map((item) => `
+        directRelatedGrid.innerHTML = relatedProducts.map((item) => {
+          const isFree = Number(item.price || 0) === 0;
+          const buttonHTML = isFree
+            ? `<a class="btn small" href="${item.google_drive_id}" target="_blank" rel="noopener noreferrer">Free Preview</a>`
+            : `<a class="btn small" href="/buy/${encodeURIComponent(item.id)}">Buy This</a>`;
+          return `
           <article class="pdf-card direct-related-card">
             <p class="note-kicker">Related Notes</p>
             <h3>${item.title || "Untitled Notes"}</h3>
             <p>${item.description || "Exam-focused notes."}</p>
             <div class="note-price">${priceHTML(item)}${discountHTML(item)}</div>
             <div class="direct-related-actions">
-              <a class="btn small" href="/buy/${encodeURIComponent(item.id)}">Buy This</a>
+              ${buttonHTML}
             </div>
           </article>
-        `).join("");
+        `;
+        }).join("");
       }
 
       showDirectMode();
@@ -557,7 +585,13 @@
 
     directBuyBtn.addEventListener("click", () => {
       if (!selectedProduct) return;
-      openCheckout(selectedProduct.id);
+      // For free items, open the Google Drive link directly
+      const isFree = Number(selectedProduct.price || 0) === 0;
+      if (isFree && selectedProduct.google_drive_id) {
+        window.open(selectedProduct.google_drive_id, '_blank');
+      } else {
+        openCheckout(selectedProduct.id);
+      }
     });
 
     pdfScroller.addEventListener("click", (event) => {

@@ -354,13 +354,21 @@
 
         const notesGrid = document.getElementById('notesGrid');
         notesGrid.innerHTML = data.slice(0, 3).map((product, index) => {
-          const directBuyURL = '/buy/' + encodeURIComponent(product.id);
-          const label = index === 0 ? 'Featured Notes' : index === 1 ? 'Revision Notes' : 'Study Notes';
-          const fakePrice = Number(product.offer_price || 0);
           const actualPrice = Number(product.price || 0);
-          const discount = Number(product.discount_percent || 0);
-          const discountHTML = discount > 0 ? `<span class="discount-badge">${discount}% OFF</span>` : '';
-          const priceHTML = fakePrice > actualPrice ? `
+          const isFree = actualPrice === 0;
+          const actionURL = isFree ? product.google_drive_id : '/buy/' + encodeURIComponent(product.id);
+          const actionText = isFree ? 'Free Preview' : 'Buy Now';
+          const actionTarget = isFree ? '_blank' : '_self';
+          const label = index === 0 ? 'Featured Notes' : index === 1 ? 'Revision Notes' : 'Study Notes';
+          const fakePrice = Number(product.offer_price);
+          const discount = Number(product.discount_percent);
+          const discountHTML = `<span class="discount-badge">${discount}% OFF</span>`;
+          const priceHTML = isFree ? `
+            <div class="note-price">
+              <span class="current-price">FREE</span>
+              ${discount > 0 ? discountHTML : ''}
+            </div>
+          ` : fakePrice > actualPrice ? `
             <div class="note-price">
               <span class="old-price">Rs. ${fakePrice}</span>
               <span class="current-price">Rs. ${actualPrice}</span>
@@ -379,7 +387,7 @@
               <p>${product.description}</p>
               ${priceHTML}
               <div class="card-actions">
-                <a class="btn small" href="${directBuyURL}">Buy Now</a>
+                <a class="btn small" href="${actionURL}" target="${actionTarget}" rel="noopener">${actionText}</a>
               </div>
             </article>
           `;

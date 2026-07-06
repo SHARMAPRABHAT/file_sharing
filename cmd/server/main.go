@@ -34,14 +34,33 @@ type Content struct {
 	Price           int    `json:"price"`
 	OfferPrice      int    `json:"offer_price"`
 	DiscountPercent int    `json:"discount_percent"`
-	GoogleDriveID   string `json:"-"`
-	GoogleDriveIDs  []GoogleDriveLink
+	GoogleDriveID   string `json:"-"` // Hidden by default, only exposed for free items via MarshalJSON
+	GoogleDriveIDs  []GoogleDriveLink `json:"google_drive_ids"`
 	FilePath        string `json:"-"`
 }
 
+// MarshalJSON customizes JSON encoding to only include GoogleDriveID for free items (price == 0)
+func (c Content) MarshalJSON() ([]byte, error) {
+	m := map[string]interface{}{
+		"id":               c.ID,
+		"title":            c.Title,
+		"description":      c.Description,
+		"category":         c.Category,
+		"price":            c.Price,
+		"offer_price":      c.OfferPrice,
+		"discount_percent": c.DiscountPercent,
+		"google_drive_ids": c.GoogleDriveIDs,
+	}
+	// Only include google_drive_id if this is a free item (price == 0)
+	if c.Price == 0 && c.GoogleDriveID != "" {
+		m["google_drive_id"] = c.GoogleDriveID
+	}
+	return json.Marshal(m)
+}
+
 type GoogleDriveLink struct {
-	Title string
-	ID    string
+	Title string `json:"title"`
+	ID    string `json:"id"`
 }
 
 type Category struct {
@@ -127,6 +146,28 @@ var categories = []Category{
 }
 
 var contents = map[string]Content{
+	"free-sample-paper-1-special-notes": {
+		ID:              "free-sample-paper-1-special-notes",
+		Title:           "Free Sample - Paper I Notes",
+		Description:     "Get started with a free comprehensive sample of Paper I notes. Covers key concepts, terminology, and exam-focused revision tips to help you decide if these notes are right for you.",
+		Category:        "paper-1-special-notes",
+		Price:           0,
+		OfferPrice:      299,
+		DiscountPercent: 100,
+		GoogleDriveID:   "https://drive.google.com/file/d/16jtJ1iy1Q1uviMnES-7ZyDaeFN-mH3Lf/view?usp=drive_link",
+		FilePath:        "",
+	},
+	"free-sample-paper-1-dictionary": {
+		ID:              "free-sample-paper-1-dictionary",
+		Title:           "Free Sample - Paper I Notes",
+		Description:     "Get started with a free comprehensive sample of Paper I notes. Covers key concepts, terminology, and exam-focused revision tips to help you decide if these notes are right for you.",
+		Category:        "paper-1-dictionary",
+		Price:           0,
+		OfferPrice:      299,
+		DiscountPercent: 100,
+		GoogleDriveID:   "https://drive.google.com/file/d/16jtJ1iy1Q1uviMnES-7ZyDaeFN-mH3Lf/view?usp=drive_link",
+		FilePath:        "",
+	},
 	"teaching-aptitude-TA": {
 		ID:              "teaching-aptitude-TA",
 		Title:           "Teaching Aptitude Dictionary",
@@ -301,11 +342,53 @@ var contents = map[string]Content{
 			{Title: "उच्च शिक्षा प्रणाली (हिंदी)", ID: "https://drive.google.com/file/d/1c1nlUoOR9DMC0i77FlWnI5yNA0lI6_D_/view?usp=drive_link"},
 		},
 	},
+	"research-aptitude-eng": {
+		ID:              "research-aptitude-eng",
+		Title:           "Master Research Aptitude (English) in One Go!",
+		Description:     "100% Updated Syllabus Coverage. Concept Clarity + Smart Revision Tricks. Designed to lock your 10/10 marks in Paper 1. Complete Research Aptitude explained with expert guidance and high-yield concepts (PDF).",
+		Category:        "paper-1-special-notes",
+		Price:           149,
+		OfferPrice:      499,
+		DiscountPercent: 70,
+		GoogleDriveID:   "https://drive.google.com/file/d/1WIq-M0Y1r7qCeuegz7Mj0hEAmrI-zO_2/view?usp=drive_link",
+		FilePath:        "./assets/paper-1-special-notes/research-aptitude-eng.pdf",
+	},
+	"research-aptitude-hindi": {
+		ID:              "research-aptitude-hindi",
+		Title:           "Master Research Aptitude (अनुसंधान योग्यता) - Hindi",
+		Description:     "अनुसंधान योग्यता को हिंदी में सरलतम भाषा में समझें। 100% Updated Syllabus Coverage के साथ Concept Clarity और Smart Revision Tricks। Paper 1 में 10/10 अंक प्राप्त करने के लिए डिज़ाइन किया गया है। संपूर्ण Research Aptitude आसान उदाहरणों के साथ समझाया गया है (PDF)।",
+		Category:        "paper-1-special-notes",
+		Price:           149,
+		OfferPrice:      499,
+		DiscountPercent: 70,
+		GoogleDriveID:   "https://drive.google.com/file/d/1MxrWd7xmkSSW9YovtyMLIMCxB3g1xO8L/view?usp=drive_link",
+		FilePath:        "./assets/paper-1-special-notes/research-aptitude-hindi.pdf",
+	},
+	"research-aptitude-bilingual": {
+		ID:    "research-aptitude-bilingual",
+		Title: "Research Aptitude Special Notes (English & Hindi Combo)",
+		Description: `Master Research Aptitude in both Easy English & Hindi! Complex concepts simplified with daily-life examples. Perfect for both Hindi & English medium students to score 10/10 in Paper 1.
+	
+	Research Aptitude को हिंदी और अंग्रेजी दोनों में सीखें! कठिन concepts को रोजमर्रा के उदाहरणों से समझाया गया है। हिंदी और अंग्रेजी माध्यम दोनों के छात्रों के लिए Paper 1 में 10/10 अंक लाने के लिए परफेक्ट (PDF).`,
+
+		Category:        "paper-1-special-notes",
+		Price:           249,
+		OfferPrice:      849,
+		DiscountPercent: 70,
+		FilePath:        "./assets/paper-1-special-notes/research-aptitude-bilingual.pdf",
+		GoogleDriveIDs: []GoogleDriveLink{
+			{Title: "Master Research Aptitude (English)", ID: "https://drive.google.com/file/d/1WIq-M0Y1r7qCeuegz7Mj0hEAmrI-zO_2/view?usp=drive_link"},
+			{Title: "Master Research Aptitude (हिंदी)", ID: "https://drive.google.com/file/d/1MxrWd7xmkSSW9YovtyMLIMCxB3g1xO8L/view?usp=drive_link"},
+		},
+	},
 }
 
 // contentOrder defines the sequence of contents as they should appear on the webpage
 var contentOrder = []string{
+	"free-sample-paper-1-special-notes",
+	"free-sample-paper-1-dictionary",
 	"teaching-aptitude-TA",
+	"people-development-environment-eng",
 	"research-aptitude-RA",
 	"communication",
 	"logical-reasoning-LR",
@@ -313,12 +396,14 @@ var contentOrder = []string{
 	"people-development-environment-PDE",
 	"higher-education-system-HES",
 	"all-units-combo",
-	"people-development-environment-eng",
 	"people-development-environment-hindi",
 	"people-development-environment-bilingual",
 	"higher-education-system-eng",
 	"higher-education-system-hindi",
 	"higher-education-system-bilingual",
+	"research-aptitude-eng",
+	"research-aptitude-hindi",
+	"research-aptitude-bilingual",
 }
 
 // Deprecated: token-based system replaced with Google Drive direct links

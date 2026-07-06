@@ -303,6 +303,24 @@ var contents = map[string]Content{
 	},
 }
 
+// contentOrder defines the sequence of contents as they should appear on the webpage
+var contentOrder = []string{
+	"teaching-aptitude-TA",
+	"research-aptitude-RA",
+	"communication",
+	"logical-reasoning-LR",
+	"information-communication-technology-ICT",
+	"people-development-environment-PDE",
+	"higher-education-system-HES",
+	"all-units-combo",
+	"people-development-environment-eng",
+	"people-development-environment-hindi",
+	"people-development-environment-bilingual",
+	"higher-education-system-eng",
+	"higher-education-system-hindi",
+	"higher-education-system-bilingual",
+}
+
 // Deprecated: token-based system replaced with Google Drive direct links
 var (
 	tokenStore = map[string]AccessToken{}
@@ -386,9 +404,11 @@ func main() {
 	})
 
 	r.GET("/api/contents", func(c *gin.Context) {
-		list := make([]Content, 0, len(contents))
-		for _, content := range contents {
-			list = append(list, content)
+		list := make([]Content, 0, len(contentOrder))
+		for _, id := range contentOrder {
+			if content, ok := contents[id]; ok {
+				list = append(list, content)
+			}
 		}
 		c.JSON(http.StatusOK, list)
 	})

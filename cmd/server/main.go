@@ -27,16 +27,16 @@ import (
 )
 
 type Content struct {
-	ID              string `json:"id"`
-	Title           string `json:"title"`
-	Description     string `json:"description"`
-	Category        string `json:"category"`
-	Price           int    `json:"price"`
-	OfferPrice      int    `json:"offer_price"`
-	DiscountPercent int    `json:"discount_percent"`
-	GoogleDriveID   string `json:"-"` // Hidden by default, only exposed for free items via MarshalJSON
+	ID              string            `json:"id"`
+	Title           string            `json:"title"`
+	Description     string            `json:"description"`
+	Category        string            `json:"category"`
+	Price           int               `json:"price"`
+	OfferPrice      int               `json:"offer_price"`
+	DiscountPercent int               `json:"discount_percent"`
+	GoogleDriveID   string            `json:"-"` // Hidden by default, only exposed for free items via MarshalJSON
 	GoogleDriveIDs  []GoogleDriveLink `json:"google_drive_ids"`
-	FilePath        string `json:"-"`
+	FilePath        string            `json:"-"`
 }
 
 // MarshalJSON customizes JSON encoding to only include GoogleDriveID for free items (price == 0)
@@ -110,6 +110,33 @@ type ContactReq struct {
 	Email   string `json:"email"`
 	Message string `json:"message"`
 }
+
+type CourseOfferState struct {
+	Title           string            `json:"title"`
+	Description     string            `json:"description,omitempty"`
+	Price           int               `json:"price,omitempty"`
+	OfferPrice      int               `json:"offer_price,omitempty"`
+	DiscountPercent int               `json:"discount_percent,omitempty"`
+	Sold            int               `json:"sold"`
+	Total           int               `json:"total"`
+	GoogleDriveID   string            `json:"google_drive_id,omitempty"`
+	GoogleDriveIDs  []GoogleDriveLink `json:"google_drive_ids,omitempty"`
+	FilePath        string            `json:"file_path,omitempty"`
+}
+
+type CourseOfferFile struct {
+	Courses map[string]CourseOfferState `json:"courses"`
+}
+
+type CoursePurchaseReq struct {
+	CourseID string `json:"course_id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Mobile   string `json:"mobile"`
+}
+
+var offerStateMu sync.Mutex
+var offerStatePath = "./data/course-offers.json"
 
 // AccessToken deprecated: using Google Drive links instead
 type AccessToken struct {
@@ -466,6 +493,14 @@ func main() {
 		c.File("./web/static/policy.html")
 	})
 
+	r.GET("/buy-courses", func(c *gin.Context) {
+		c.File("./web/static/buy-course.html")
+	})
+
+	r.GET("/buy-course", func(c *gin.Context) {
+		c.File("./web/static/buy-course.html")
+	})
+
 	r.GET("/buy", func(c *gin.Context) {
 		c.File("./web/static/buy.html")
 	})
@@ -486,6 +521,95 @@ func main() {
 
 	r.GET("/api/categories", func(c *gin.Context) {
 		c.JSON(http.StatusOK, categories)
+	})
+
+	r.GET("/api/course-offers", func(c *gin.Context) {
+		state, err := loadCourseOffers()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load course offer state"})
+			return
+		}
+		c.JSON(http.StatusOK, state)
+	})
+
+	r.POST("/api/course-offers/claim", func(c *gin.Context) {
+		var req CoursePurchaseReq
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON body"})
+			return
+		}
+		req.CourseID = strings.TrimSpace(req.CourseID)
+		req.Name = strings.TrimSpace(req.Name)
+		req.Email = strings.TrimSpace(req.Email)
+		req.Mobile = strings.TrimSpace(req.Mobile)
+
+		if req.CourseID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "course_id is required"})
+			return
+		}
+		if len(req.Name) < 2 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+			return
+		}
+		if !strings.Contains(req.Email, "@") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "valid email is required"})
+			return
+		}
+		if !isValidMobile10(req.Mobile) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "valid 10-digit mobile is required"})
+			return
+		}
+
+		state, err := loadCourseOffers()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load course offer state"})
+			return
+		}
+
+		course, ok := state.Courses[req.CourseID]
+		if !ok {
+			c.JSON(http.StatusNotFound, gin.H{"error": "course not found"})
+			return
+		}
+		if course.Sold >= course.Total {
+			c.JSON(http.StatusConflict, gin.H{"error": "offer seats already filled"})
+			return
+		}
+
+		offerStateMu.Lock()
+		defer offerStateMu.Unlock()
+
+		state, err = loadCourseOffers()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to reload course offer state"})
+			return
+		}
+		course = state.Courses[req.CourseID]
+		if course.Sold >= course.Total {
+			c.JSON(http.StatusConflict, gin.H{"error": "offer seats already filled"})
+			return
+		}
+		course.Sold++
+		state.Courses[req.CourseID] = course
+		if err := saveCourseOffers(state); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save course offer state"})
+			return
+		}
+
+		if resendAPIKey != "" && resendFrom != "" {
+			if err := sendCourseOfferEmail(resendAPIKey, resendFrom, req.Email, req.Name, course); err != nil {
+				log.Printf("failed to send course delivery email for course_id=%q email=%q: %v", req.CourseID, req.Email, err)
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":    "ok",
+			"message":   "offer claim recorded",
+			"course_id": req.CourseID,
+			"sold":      course.Sold,
+			"total":     course.Total,
+			"remaining": course.Total - course.Sold,
+		})
 	})
 
 	r.GET("/api/contents", func(c *gin.Context) {
@@ -684,6 +808,38 @@ func main() {
 	if err := r.Run(addr); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func loadCourseOffers() (CourseOfferFile, error) {
+	state := CourseOfferFile{Courses: map[string]CourseOfferState{}}
+	data, err := os.ReadFile(offerStatePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return state, nil
+		}
+		return state, err
+	}
+	if len(data) == 0 {
+		return state, nil
+	}
+	if err := json.Unmarshal(data, &state); err != nil {
+		return state, err
+	}
+	if state.Courses == nil {
+		state.Courses = map[string]CourseOfferState{}
+	}
+	return state, nil
+}
+
+func saveCourseOffers(state CourseOfferFile) error {
+	if err := os.MkdirAll(filepath.Dir(offerStatePath), 0o755); err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(offerStatePath, data, 0o644)
 }
 
 func getenv(key, fallback string) string {
@@ -1032,6 +1188,106 @@ func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content C
 	}
 
 	return nil
+}
+
+func sendCourseOfferEmail(resendAPIKey, resendFrom, to, buyerName string, course CourseOfferState) error {
+	if resendAPIKey == "" || resendFrom == "" {
+		return fmt.Errorf("Resend is not configured")
+	}
+	if buyerName == "" {
+		buyerName = "there"
+	}
+
+	driveLink := strings.TrimSpace(course.GoogleDriveID)
+	if driveLink == "" && len(course.GoogleDriveIDs) > 0 {
+		driveLink = strings.TrimSpace(course.GoogleDriveIDs[0].ID)
+	}
+	if driveLink != "" {
+		driveLink = driveShareLink(driveLink)
+	}
+
+	bodyLines := []string{
+		"Hi " + buyerName + ",",
+		"",
+		"Thanks for buying " + course.Title + ".",
+		"",
+		"Course details:",
+		course.Title,
+	}
+	if course.Description != "" {
+		bodyLines = append(bodyLines, course.Description)
+	}
+	if course.Price > 0 {
+		bodyLines = append(bodyLines, fmt.Sprintf("Course price: ₹%d", course.Price))
+	}
+	if course.OfferPrice > 0 {
+		bodyLines = append(bodyLines, fmt.Sprintf("Launch offer price: ₹%d", course.OfferPrice))
+	}
+	if course.DiscountPercent > 0 {
+		bodyLines = append(bodyLines, fmt.Sprintf("Discount: %d%%", course.DiscountPercent))
+	}
+	if driveLink != "" {
+		bodyLines = append(bodyLines, "")
+		bodyLines = append(bodyLines, "Google Drive delivery link:")
+		bodyLines = append(bodyLines, driveLink)
+	}
+
+	payload := resendPayload{
+		From:    resendFrom,
+		To:      []string{to},
+		Subject: "Thanks for buying " + course.Title,
+		Text:    strings.Join(bodyLines, "\n"),
+	}
+
+	attachments, err := courseOfferAttachments(course)
+	if err == nil {
+		payload.Attachments = attachments
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal course email payload: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.resend.com/emails", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to create course email request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+resendAPIKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to call Resend API for course email: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read course email response: %w", err)
+	}
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("Resend API error (%d): %s", resp.StatusCode, strings.TrimSpace(string(responseBody)))
+	}
+
+	return nil
+}
+
+func courseOfferAttachments(course CourseOfferState) ([]resendAttachment, error) {
+	path := normalizeAssetPath(course.FilePath)
+	if path == "" || !fileExists(path) {
+		return nil, fmt.Errorf("no local attachment path for %s", course.Title)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read attachment for %s: %w", course.Title, err)
+	}
+	filename := filepath.Base(path)
+	if filename == "." || filename == string(filepath.Separator) {
+		filename = course.Title + ".pdf"
+	}
+	return []resendAttachment{{Filename: filename, Content: base64Encode(data)}}, nil
 }
 
 func deliveryLinks(content Content) []deliveryLink {

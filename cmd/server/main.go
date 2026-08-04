@@ -135,6 +135,21 @@ type CoursePurchaseReq struct {
 	Mobile   string `json:"mobile"`
 }
 
+type CourseVerifyPaymentReq struct {
+	CoursePurchaseReq
+	RazorpayOrderID   string `json:"order_id"`
+	RazorpayPaymentID string `json:"payment_id"`
+	RazorpaySignature string `json:"signature"`
+}
+
+type CourseCreateOrderResp struct {
+	OrderID     string `json:"order_id"`
+	KeyID       string `json:"key_id"`
+	Amount      int    `json:"amount"`
+	Currency    string `json:"currency"`
+	CourseTitle string `json:"course_title"`
+}
+
 var offerStateMu sync.Mutex
 var offerStatePath = "./data/course-offers.json"
 
@@ -533,30 +548,21 @@ func main() {
 	})
 
 	r.POST("/api/course-offers/claim", func(c *gin.Context) {
+		c.JSON(http.StatusGone, gin.H{"error": "course checkout now requires Razorpay payment"})
+	})
+
+	r.POST("/api/course-orders", func(c *gin.Context) {
 		var req CoursePurchaseReq
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON body"})
 			return
 		}
-		req.CourseID = strings.TrimSpace(req.CourseID)
-		req.Name = strings.TrimSpace(req.Name)
-		req.Email = strings.TrimSpace(req.Email)
-		req.Mobile = strings.TrimSpace(req.Mobile)
-
-		if req.CourseID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "course_id is required"})
+		if err := validateCoursePurchase(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if len(req.Name) < 2 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
-			return
-		}
-		if !strings.Contains(req.Email, "@") {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "valid email is required"})
-			return
-		}
-		if !isValidMobile10(req.Mobile) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "valid 10-digit mobile is required"})
+		if razorpayClient == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Razorpay is not configured"})
 			return
 		}
 
@@ -565,7 +571,6 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load course offer state"})
 			return
 		}
-
 		course, ok := state.Courses[req.CourseID]
 		if !ok {
 			c.JSON(http.StatusNotFound, gin.H{"error": "course not found"})
@@ -576,15 +581,65 @@ func main() {
 			return
 		}
 
-		offerStateMu.Lock()
-		defer offerStateMu.Unlock()
-
-		state, err = loadCourseOffers()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to reload course offer state"})
+		amount := courseCheckoutPrice(course)
+		if amount <= 0 {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "course price is not configured"})
 			return
 		}
-		course = state.Courses[req.CourseID]
+		body, err := razorpayClient.Order.Create(map[string]interface{}{
+			"amount": amount * 100, "currency": "INR", "receipt": razorpayReceipt("course_" + req.CourseID),
+		}, nil)
+		if err != nil {
+			log.Printf("failed to create Razorpay order for course_id=%q: %v", req.CourseID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create Razorpay order"})
+			return
+		}
+		orderID, _ := body["id"].(string)
+		if orderID == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid Razorpay response"})
+			return
+		}
+		c.JSON(http.StatusOK, CourseCreateOrderResp{OrderID: orderID, KeyID: keyID, Amount: amount * 100, Currency: "INR", CourseTitle: course.Title})
+	})
+
+	r.POST("/api/course-payments/verify", func(c *gin.Context) {
+		var req CourseVerifyPaymentReq
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON body"})
+			return
+		}
+		if err := validateCoursePurchase(&req.CoursePurchaseReq); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		req.RazorpayOrderID = strings.TrimSpace(req.RazorpayOrderID)
+		req.RazorpayPaymentID = strings.TrimSpace(req.RazorpayPaymentID)
+		req.RazorpaySignature = strings.TrimSpace(req.RazorpaySignature)
+		if req.RazorpayOrderID == "" || req.RazorpayPaymentID == "" || req.RazorpaySignature == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "order_id, payment_id, and signature are required"})
+			return
+		}
+		if keySecret == "" || !verifySignature(req.RazorpayOrderID, req.RazorpayPaymentID, req.RazorpaySignature, keySecret) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid payment signature"})
+			return
+		}
+		if resendAPIKey == "" || resendFrom == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Resend is not configured"})
+			return
+		}
+
+		offerStateMu.Lock()
+		defer offerStateMu.Unlock()
+		state, err := loadCourseOffers()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load course offer state"})
+			return
+		}
+		course, ok := state.Courses[req.CourseID]
+		if !ok {
+			c.JSON(http.StatusNotFound, gin.H{"error": "course not found"})
+			return
+		}
 		if course.Sold >= course.Total {
 			c.JSON(http.StatusConflict, gin.H{"error": "offer seats already filled"})
 			return
@@ -595,21 +650,12 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save course offer state"})
 			return
 		}
-
-		if resendAPIKey != "" && resendFrom != "" {
-			if err := sendCourseOfferEmail(resendAPIKey, resendFrom, req.Email, req.Name, course); err != nil {
-				log.Printf("failed to send course delivery email for course_id=%q email=%q: %v", req.CourseID, req.Email, err)
-			}
+		if err := sendCourseOfferEmail(resendAPIKey, resendFrom, req.Email, req.Name, course); err != nil {
+			log.Printf("payment verified but course delivery email failed for course_id=%q email=%q: %v", req.CourseID, req.Email, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "payment verified, but the course email could not be sent; please contact support"})
+			return
 		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"status":    "ok",
-			"message":   "offer claim recorded",
-			"course_id": req.CourseID,
-			"sold":      course.Sold,
-			"total":     course.Total,
-			"remaining": course.Total - course.Sold,
-		})
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "payment verified and course details sent by email", "sold": course.Sold, "total": course.Total, "remaining": course.Total - course.Sold})
 	})
 
 	r.GET("/api/contents", func(c *gin.Context) {
@@ -1055,6 +1101,33 @@ func isValidMobile10(m string) bool {
 		}
 	}
 	return true
+}
+
+func validateCoursePurchase(req *CoursePurchaseReq) error {
+	req.CourseID = strings.TrimSpace(req.CourseID)
+	req.Name = strings.TrimSpace(req.Name)
+	req.Email = strings.TrimSpace(req.Email)
+	req.Mobile = strings.TrimSpace(req.Mobile)
+	if req.CourseID == "" {
+		return fmt.Errorf("course_id is required")
+	}
+	if len(req.Name) < 2 {
+		return fmt.Errorf("name is required")
+	}
+	if !strings.Contains(req.Email, "@") {
+		return fmt.Errorf("valid email is required")
+	}
+	if !isValidMobile10(req.Mobile) {
+		return fmt.Errorf("valid 10-digit mobile is required")
+	}
+	return nil
+}
+
+func courseCheckoutPrice(course CourseOfferState) int {
+	if course.OfferPrice > 0 {
+		return course.OfferPrice
+	}
+	return course.Price
 }
 
 func appendContactToSheet(webhookURL string, contact ContactReq) error {

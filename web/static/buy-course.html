@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Buy Course | Early Bird Offer</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     :root {
       --bg: #f8fafc;
@@ -768,6 +769,23 @@
       font-size: 0.9rem;
     }
 
+    .course-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .course-card .course-actions .btn {
+      margin-top: 0;
+    }
+
+    .course-card .course-guide-btn {
+      background: #ffffff;
+      color: #1d4ed8;
+      border: 1px solid #1d4ed8;
+    }
+
     .section-header {
       display: flex;
       align-items: end;
@@ -974,28 +992,7 @@
     </div>
 
       <div class="course-grid">
-        <article class="course-card">
-          <div class="catalog-offer-box">
-            <p class="catalog-title">Catalog Launch Offer</p>
-            <div class="catalog-price">
-              <span class="old">₹--</span>
-              <span class="new">₹--</span>
-            </div>
-            <p class="catalog-sub">Loading launch price…</p>
-            <div class="catalog-progress" aria-label="First 50 discount seats progress" style="--sold-percent: 0%;"><span style="width:0%"></span></div>
-            <p class="catalog-foot">0 of 0 seats already filled for early support</p>
-          </div>
-          <div class="course-card-header">
-            <h3>Foundation Batch</h3>
-            <span class="discount-pill">—</span>
-          </div>
-          <p class="course-meta">Best for new learners who want a sharp, structured start with clear concept building.</p>
-          <div class="course-price-row">
-            <span class="old">₹--</span>
-            <span class="new">₹--</span>
-          </div>
-          <button class="btn btn-primary course-buy-btn" type="button" data-course-id="foundation-batch">Buy Now</button>
-        </article>
+        
 
         <article class="course-card">
           <div class="catalog-offer-box">
@@ -1017,7 +1014,10 @@
             <span class="old">₹--</span>
             <span class="new">₹--</span>
           </div>
-          <button class="btn btn-primary course-buy-btn" type="button" data-course-id="crash-revision-pack">Buy Now</button>
+          <div class="course-actions">
+            <button class="btn btn-primary course-buy-btn" type="button" data-course-id="crash-revision-pack">Buy Now</button>
+            <a class="btn course-guide-btn" href="https://drive.google.com/file/d/1v6b_DxJLeFsmzIcXuRKCW5ERhU58kahF/view?usp=drive_link" target="_blank" rel="noopener noreferrer">Take Your Guide Here</a>
+          </div>
         </article>
       </div>
     </section>
@@ -1207,32 +1207,86 @@
       event.preventDefault();
       const payload = {
         course_id: claimCourseId.value,
-        name: document.getElementById('claimName').value,
-        email: document.getElementById('claimEmail').value,
-        mobile: document.getElementById('claimMobile').value
+        name: document.getElementById('claimName').value.trim(),
+        email: document.getElementById('claimEmail').value.trim(),
+        mobile: document.getElementById('claimMobile').value.trim()
       };
+      const submitButton = claimForm.querySelector('button[type="submit"]');
 
       claimStatus.classList.remove('is-visible');
       claimStatus.textContent = '';
+	  if (!/^[0-9]{10}$/.test(payload.mobile)) {
+		claimStatus.textContent = 'Please enter a valid 10-digit mobile number.';
+		claimStatus.classList.add('is-visible');
+		return;
+	  }
+	  if (!window.Razorpay) {
+		claimStatus.textContent = 'Secure payment could not be loaded. Please refresh and try again.';
+		claimStatus.classList.add('is-visible');
+		return;
+	  }
 
       try {
-        const response = await fetch('/api/course-offers/claim', {
+        submitButton.disabled = true;
+        claimStatus.textContent = 'Creating secure payment order...';
+        claimStatus.classList.add('is-visible');
+        const response = await fetch('/api/course-orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
         const data = await response.json();
         if (!response.ok) {
-          throw new Error(data?.error || 'Unable to buy course offer. Please try again later.');
+          throw new Error(data?.error || 'Unable to create payment order. Please try again later.');
         }
 
-        claimStatus.textContent = 'Seat reserved successfully. ' + data.sold + ' of ' + data.total + ' seats are now filled.';
-        claimStatus.classList.add('is-visible');
-        await loadOfferState();
-        setTimeout(closeClaimModal, 1200);
+        const razorpay = new window.Razorpay({
+          key: data.key_id,
+          amount: data.amount,
+          currency: data.currency,
+          name: "Neha's Academy",
+          description: data.course_title,
+          order_id: data.order_id,
+          prefill: { name: payload.name, email: payload.email, contact: payload.mobile },
+          theme: { color: '#1d4ed8' },
+          handler: async (payment) => {
+            claimStatus.textContent = 'Payment received. Verifying payment...';
+            try {
+              const verifyResponse = await fetch('/api/course-payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  ...payload,
+                  order_id: payment.razorpay_order_id,
+                  payment_id: payment.razorpay_payment_id,
+                  signature: payment.razorpay_signature
+                })
+              });
+              const verifyData = await verifyResponse.json();
+              if (!verifyResponse.ok || verifyData?.status !== 'ok') {
+                throw new Error(verifyData?.error || verifyData?.message || 'Payment verification failed.');
+              }
+              claimStatus.textContent = 'Payment verified. Course details have been sent to your email.';
+              await loadOfferState();
+              setTimeout(closeClaimModal, 1600);
+            } catch (error) {
+              claimStatus.textContent = error.message;
+            } finally {
+              claimStatus.classList.add('is-visible');
+              submitButton.disabled = false;
+            }
+          }
+        });
+        razorpay.on('payment.failed', (response) => {
+          claimStatus.textContent = 'Payment failed: ' + (response.error?.description || 'Please try again.');
+          claimStatus.classList.add('is-visible');
+          submitButton.disabled = false;
+        });
+        razorpay.open();
       } catch (error) {
         claimStatus.textContent = error.message;
         claimStatus.classList.add('is-visible');
+		submitButton.disabled = false;
       }
     });
 

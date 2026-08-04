@@ -650,6 +650,18 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save course offer state"})
 			return
 		}
+		if driveOAuth.Configured() {
+			courseDriveContent := Content{
+				ID:             req.CourseID,
+				GoogleDriveID:  course.GoogleDriveID,
+				GoogleDriveIDs: course.GoogleDriveIDs,
+			}
+			if err := grantDriveViewerAccess(driveOAuth, courseDriveContent, req.Email); err != nil {
+				log.Printf("payment verified but Drive access grant failed for course_id=%q email=%q: %v", req.CourseID, req.Email, err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "payment verified but failed to grant Google Drive access"})
+				return
+			}
+		}
 		if err := sendCourseOfferEmail(resendAPIKey, resendFrom, req.Email, req.Name, course); err != nil {
 			log.Printf("payment verified but course delivery email failed for course_id=%q email=%q: %v", req.CourseID, req.Email, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "payment verified, but the course email could not be sent; please contact support"})

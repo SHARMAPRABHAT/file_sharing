@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -187,265 +189,40 @@ var categories = []Category{
 	},
 }
 
-var contents = map[string]Content{
-	"free-sample-paper-1-special-notes": {
-		ID:              "free-sample-paper-1-special-notes",
-		Title:           "Free Sample - Paper I Notes",
-		Description:     "Get started with a free comprehensive sample of Paper I notes. Covers key concepts, terminology, and exam-focused revision tips to help you decide if these notes are right for you.",
-		Category:        "paper-1-special-notes",
-		Price:           0,
-		OfferPrice:      299,
-		DiscountPercent: 100,
-		GoogleDriveID:   "https://drive.google.com/file/d/16jtJ1iy1Q1uviMnES-7ZyDaeFN-mH3Lf/view?usp=drive_link",
-		FilePath:        "",
-	},
-	"free-sample-paper-1-dictionary": {
-		ID:              "free-sample-paper-1-dictionary",
-		Title:           "Free Sample - Paper I Notes",
-		Description:     "Get started with a free comprehensive sample of Paper I notes. Covers key concepts, terminology, and exam-focused revision tips to help you decide if these notes are right for you.",
-		Category:        "paper-1-dictionary",
-		Price:           0,
-		OfferPrice:      299,
-		DiscountPercent: 100,
-		GoogleDriveID:   "https://drive.google.com/file/d/16jtJ1iy1Q1uviMnES-7ZyDaeFN-mH3Lf/view?usp=drive_link",
-		FilePath:        "",
-	},
-	"teaching-aptitude-TA": {
-		ID:              "teaching-aptitude-TA",
-		Title:           "Teaching Aptitude Dictionary",
-		Description:     "200+ core concepts, basic terms, and definitions explained in simple Hinglish (PDF).",
-		Category:        "paper-1-dictionary",
-		Price:           49,
-		OfferPrice:      199,
-		DiscountPercent: 75,
-		GoogleDriveID:   "https://drive.google.com/file/d/1G4YvpeS9IVB8YZtAYhGp-nuyFP0Kmyso/view?usp=drive_link",
-		FilePath:        ".assets/paper-1-dictionary/teaching-aptitude-TA.pdf",
-	},
-	"research-aptitude-RA": {
-		ID:              "research-aptitude-RA",
-		Title:           "Research Aptitude Dictionary",
-		Description:     "Core research terminologies, types of research, hypothesis, and sampling terms made easy (PDF).",
-		Category:        "paper-1-dictionary",
-		Price:           49,
-		OfferPrice:      199,
-		DiscountPercent: 75,
-		GoogleDriveID:   "https://drive.google.com/file/d/1zHJjE3ETURKBzaoVMCiAZVvX_U_effxs/view?usp=drive_link",
-		FilePath:        ".assets/paper-1-dictionary/research-aptitude-RA.pdf",
-	},
-	"communication": {
-		ID:              "communication",
-		Title:           "Communication Core Terms Dictionary",
-		Description:     "Commerce terms and definitions arranged for fast recall.",
-		Category:        "paper-1-dictionary",
-		Price:           49,
-		OfferPrice:      199,
-		DiscountPercent: 75,
-		GoogleDriveID:   "https://drive.google.com/file/d/1L1fNOTfOKCrJNGT3T_Q5P8Cab6FyAgRD/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-dictionary/communication.pdf",
-	},
-	"logical-reasoning-LR": {
-		ID:              "logical-reasoning-LR",
-		Title:           "Logical Reasoning Cheatsheet",
-		Description:     "Indian Logic (Pramanas), Syllogism, and Fallacies explained with simple examples and terms (PDF).",
-		Category:        "paper-1-dictionary",
-		Price:           49,
-		OfferPrice:      199,
-		DiscountPercent: 75,
-		GoogleDriveID:   "https://drive.google.com/file/d/1CoHFvFCr16j1fLdskonLp1gR7uFlp5iQ/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-dictionary/logical-reasoning-LR.pdf",
-	},
-	"information-communication-technology-ICT": {
-		ID:              "information-communication-technology-ICT",
-		Title:           "ICT Glossary & Abbreviations",
-		Description:     "Complete A-to-Z of networking, internet terms, memory units, and acronyms for quick marks (PDF).",
-		Category:        "paper-1-dictionary",
-		Price:           49,
-		OfferPrice:      199,
-		DiscountPercent: 75,
-		GoogleDriveID:   "https://drive.google.com/file/d/1E_zMzMObBKsI5MUvfSAfN01oFckelAzt/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-dictionary/information-communication-technology-ICT.pdf",
-	},
-	"people-development-environment-PDE": {
-		ID:              "people-development-environment-PDE",
-		Title:           "People & Environment Facts",
-		Description:     "Important protocols (Kyoto, Paris), pollutants, and environmental terms in brief pointers (PDF).",
-		Category:        "paper-1-dictionary",
-		Price:           49,
-		OfferPrice:      199,
-		DiscountPercent: 75,
-		GoogleDriveID:   "https://drive.google.com/file/d/1MzIlyXjUT3L_vZVtEG_KXSgwQVFwQaNC/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-dictionary/people-development-environment-PDE.pdf",
-	},
-	"higher-education-system-HES": {
-		ID:              "higher-education-system-HES",
-		Title:           "Higher Education Quick Guide",
-		Description:     "Ancient universities, pre/post-independence committees, and digital initiatives simplified (PDF).",
-		Category:        "paper-1-dictionary",
-		Price:           49,
-		OfferPrice:      199,
-		DiscountPercent: 75,
-		GoogleDriveID:   "https://drive.google.com/file/d/1RexzDnF83huZUc4HJGVmBf4sn6GCupx2/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-dictionary/higher-education-system-HES.pdf",
-	},
-	"all-units-combo": {
-		ID:              "all-units-combo",
-		Title:           "All 7 Units Ultimate Dictionary Combo",
-		Description:     "Get complete access to all 7 units (Teaching, Research, Communication, Logical Reasoning, ICT, PDE, HES) in one single download. Perfect for last-minute revision! (PDF).",
-		Category:        "paper-1-dictionary",
-		Price:           299,
-		OfferPrice:      1399,
-		DiscountPercent: 79,
-		GoogleDriveIDs: []GoogleDriveLink{
-			{Title: "Teaching Aptitude Dictionary", ID: "https://drive.google.com/file/d/1G4YvpeS9IVB8YZtAYhGp-nuyFP0Kmyso/view?usp=drive_link"},
-			{Title: "Research Aptitude Dictionary", ID: "https://drive.google.com/file/d/1zHJjE3ETURKBzaoVMCiAZVvX_U_effxs/view?usp=drive_link"},
-			{Title: "Communication Core Terms Dictionary", ID: "https://drive.google.com/file/d/1L1fNOTfOKCrJNGT3T_Q5P8Cab6FyAgRD/view?usp=drive_link"},
-			{Title: "Logical Reasoning Cheatsheet", ID: "https://drive.google.com/file/d/1CoHFvFCr16j1fLdskonLp1gR7uFlp5iQ/view?usp=drive_link"},
-			{Title: "ICT Glossary & Abbreviations", ID: "https://drive.google.com/file/d/1E_zMzMObBKsI5MUvfSAfN01oFckelAzt/view?usp=drive_link"},
-			{Title: "People & Environment Facts", ID: "https://drive.google.com/file/d/1MzIlyXjUT3L_vZVtEG_KXSgwQVFwQaNC/view?usp=drive_link"},
-			{Title: "Higher Education Quick Guide", ID: "https://drive.google.com/file/d/1RexzDnF83huZUc4HJGVmBf4sn6GCupx2/view?usp=drive_link"},
-		},
-		FilePath: "./assets/paper-1-dictionary/all-units-combo.pdf",
-	},
-	"people-development-environment-eng": {
-		ID:              "people-development-environment-eng",
-		Title:           "People, Development & Environment",
-		Description:     "Master Unit 9 with high-yield theoretical concepts, real-world applications, and latest environmental updates. Includes step-by-step guidance to solve tricky application-based questions easily! (PDF).",
-		Category:        "paper-1-special-notes",
-		Price:           149,
-		OfferPrice:      499,
-		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1FCi8_TmiUMj5l0hkfXFTK_cJ9OCdiUko/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-special-notes/people-development-environment-eng.pdf",
-	},
-	"people-development-environment-hindi": {
-		ID:              "people-development-environment-hindi",
-		Title:           "लोग, विकास और पर्यावरण (PDE): स्पेशल नोट्स",
-		Description:     "यूनिट 9 पर मजबूत पकड़ बनाएं! इसमें आपको मिलेंगे उच्च स्तरीय सैद्धांतिक विषय, वास्तविक अनुप्रयोग (Applications), और पर्यावरण से जुड़े नवीनतम करंट अफेयर्स। कठिन और एप्लीकेशन-आधारित प्रश्नों को आसानी से हल करने के लिए स्टेप-बाय-स्टेप मार्गदर्शन शामिल है! (PDF).",
-		Category:        "paper-1-special-notes",
-		Price:           149,
-		OfferPrice:      499,
-		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1KVClqjrUi4eTuvdJXJT4uhM2HNQscdEe/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-special-notes/people-development-environment-hindi.pdf",
-	},
-	"people-development-environment-bilingual": {
-		ID:    "people-development-environment-bilingual",
-		Title: "PDE Special Notes with Application (Bilingual Combo)",
-		Description: `Master Unit 9 in your preferred language! Complete theoretical concepts, real-world applications, and latest environment updates provided in both Hindi & English.
-	
-	यूनिट 9 पर मजबूत पकड़ बनाएं! इसमें आपको मिलेंगे उच्च स्तरीय सैद्धांतिक विषय, वास्तविक अनुप्रयोग और पर्यावरण के नवीनतम करंट अफेयर्स हिंदी और अंग्रेजी दोनों भाषाओं में। (PDF).`,
+// contents and contentOrder are loaded dynamically from Google Sheets.
+// They are protected by contentsMu for concurrent access.
+var (
+	contents     = map[string]Content{}
+	contentOrder = []string{}
+	contentsMu   sync.RWMutex
+)
 
-		DiscountPercent: 70,
-		Category:        "paper-1-special-notes",
-		Price:           249,
-		OfferPrice:      849,
-		GoogleDriveIDs: []GoogleDriveLink{
-			{Title: "People, Development & Environment (English)", ID: "https://drive.google.com/file/d/1FCi8_TmiUMj5l0hkfXFTK_cJ9OCdiUko/view?usp=drive_link"},
-			{Title: "लोग, विकास और पर्यावरण (हिंदी)", ID: "https://drive.google.com/file/d/1KVClqjrUi4eTuvdJXJT4uhM2HNQscdEe/view?usp=drive_link"},
-		},
-		FilePath: "./assets/paper-1-special-notes/people-development-environment-bilingual.pdf",
-	},
-	"higher-education-system-eng": {
-		ID:              "higher-education-system-eng",
-		Title:           "Higher Education System",
-		Description:     "Comprehensive notes covering Ancient Education, Pre/Post Independence Committees, NEP 2020, and Governance. Master application-based questions on institutional bodies and latest digital schemes easily! (PDF).",
-		Category:        "paper-1-special-notes",
-		Price:           149,
-		OfferPrice:      499,
-		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1IM1MZhCxhuSx3k3BD8dcojeBZ5juIa33/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-special-notes/higher-education-system-eng.pdf",
-	},
-	"higher-education-system-hindi": {
-		ID:              "higher-education-system-hindi",
-		Title:           "उच्च शिक्षा प्रणाली (HES): स्पेशल नोट्स",
-		Description:     "प्राचीन शिक्षा, स्वतंत्रता से पहले और बाद की समितियां, NEP 2020 और शासन व्यवस्था को कवर करने वाले संपूर्ण नोट्स। विभिन्न संस्थागत निकायों (Institutional Bodies) और सरकार की नवीनतम डिजिटल योजनाओं पर आने वाले एप्लीकेशन-आधारित प्रश्नों को आसानी से हल करना सीखें! (PDF).",
-		Category:        "paper-1-special-notes",
-		Price:           149,
-		OfferPrice:      499,
-		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1c1nlUoOR9DMC0i77FlWnI5yNA0lI6_D_/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-special-notes/higher-education-system-hindi.pdf",
-	},
-	"higher-education-system-bilingual": {
-		ID:    "higher-education-system-bilingual",
-		Title: "HES Special Notes with Application (Bilingual Combo)",
-		Description: `Comprehensive notes covering Ancient Education, Committees, NEP 2020, and Governance. Master tricky application-based questions with content available in both Hindi & English.
-	
-	प्राचीन शिक्षा, समितियां, NEP 2020 और शासन व्यवस्था को कवर करने वाले संपूर्ण नोट्स। कठिन और एप्लीकेशन-आधारित प्रश्नों को हल करने का तरीका सीखें, अब हिंदी और अंग्रेजी दोनों भाषाओं में उपलब्ध। (PDF).`,
-
-		Category:        "paper-1-special-notes",
-		Price:           249,
-		OfferPrice:      849,
-		DiscountPercent: 70,
-		FilePath:        "./assets/paper-1-special-notes/higher-education-system-bilingual.pdf",
-		GoogleDriveIDs: []GoogleDriveLink{
-			{Title: "Higher Education System (English)", ID: "https://drive.google.com/file/d/1IM1MZhCxhuSx3k3BD8dcojeBZ5juIa33/view?usp=drive_link"},
-			{Title: "उच्च शिक्षा प्रणाली (हिंदी)", ID: "https://drive.google.com/file/d/1c1nlUoOR9DMC0i77FlWnI5yNA0lI6_D_/view?usp=drive_link"},
-		},
-	},
-	"research-aptitude-eng": {
-		ID:              "research-aptitude-eng",
-		Title:           "Master Research Aptitude (English) in One Go!",
-		Description:     "100% Updated Syllabus Coverage. Concept Clarity + Smart Revision Tricks. Designed to lock your 10/10 marks in Paper 1. Complete Research Aptitude explained with expert guidance and high-yield concepts (PDF).",
-		Category:        "paper-1-special-notes",
-		Price:           149,
-		OfferPrice:      499,
-		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1WIq-M0Y1r7qCeuegz7Mj0hEAmrI-zO_2/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-special-notes/research-aptitude-eng.pdf",
-	},
-	"research-aptitude-hindi": {
-		ID:              "research-aptitude-hindi",
-		Title:           "Master Research Aptitude (अनुसंधान योग्यता) - Hindi",
-		Description:     "अनुसंधान योग्यता को हिंदी में सरलतम भाषा में समझें। 100% Updated Syllabus Coverage के साथ Concept Clarity और Smart Revision Tricks। Paper 1 में 10/10 अंक प्राप्त करने के लिए डिज़ाइन किया गया है। संपूर्ण Research Aptitude आसान उदाहरणों के साथ समझाया गया है (PDF)।",
-		Category:        "paper-1-special-notes",
-		Price:           149,
-		OfferPrice:      499,
-		DiscountPercent: 70,
-		GoogleDriveID:   "https://drive.google.com/file/d/1MxrWd7xmkSSW9YovtyMLIMCxB3g1xO8L/view?usp=drive_link",
-		FilePath:        "./assets/paper-1-special-notes/research-aptitude-hindi.pdf",
-	},
-	"research-aptitude-bilingual": {
-		ID:    "research-aptitude-bilingual",
-		Title: "Research Aptitude Special Notes (English & Hindi Combo)",
-		Description: `Master Research Aptitude in both Easy English & Hindi! Complex concepts simplified with daily-life examples. Perfect for both Hindi & English medium students to score 10/10 in Paper 1.
-	
-	Research Aptitude को हिंदी और अंग्रेजी दोनों में सीखें! कठिन concepts को रोजमर्रा के उदाहरणों से समझाया गया है। हिंदी और अंग्रेजी माध्यम दोनों के छात्रों के लिए Paper 1 में 10/10 अंक लाने के लिए परफेक्ट (PDF).`,
-
-		Category:        "paper-1-special-notes",
-		Price:           249,
-		OfferPrice:      849,
-		DiscountPercent: 70,
-		FilePath:        "./assets/paper-1-special-notes/research-aptitude-bilingual.pdf",
-		GoogleDriveIDs: []GoogleDriveLink{
-			{Title: "Master Research Aptitude (English)", ID: "https://drive.google.com/file/d/1WIq-M0Y1r7qCeuegz7Mj0hEAmrI-zO_2/view?usp=drive_link"},
-			{Title: "Master Research Aptitude (हिंदी)", ID: "https://drive.google.com/file/d/1MxrWd7xmkSSW9YovtyMLIMCxB3g1xO8L/view?usp=drive_link"},
-		},
-	},
+// getContent safely reads a single content item by ID.
+func getContent(id string) (Content, bool) {
+	contentsMu.RLock()
+	defer contentsMu.RUnlock()
+	c, ok := contents[id]
+	return c, ok
 }
 
-// contentOrder defines the sequence of contents as they should appear on the webpage
-var contentOrder = []string{
-	"free-sample-paper-1-special-notes",
-	"teaching-aptitude-TA",
-	"people-development-environment-eng",
-	"free-sample-paper-1-dictionary",
-	"research-aptitude-RA",
-	"communication",
-	"logical-reasoning-LR",
-	"information-communication-technology-ICT",
-	"people-development-environment-PDE",
-	"higher-education-system-HES",
-	"all-units-combo",
-	"people-development-environment-hindi",
-	"people-development-environment-bilingual",
-	"higher-education-system-eng",
-	"higher-education-system-hindi",
-	"higher-education-system-bilingual",
-	"research-aptitude-eng",
-	"research-aptitude-hindi",
-	"research-aptitude-bilingual",
+// getContentOrder safely returns the current content order.
+func getContentOrder() []string {
+	contentsMu.RLock()
+	defer contentsMu.RUnlock()
+	out := make([]string, len(contentOrder))
+	copy(out, contentOrder)
+	return out
+}
+
+// getAllContents safely returns all contents as a map copy.
+func getAllContents() map[string]Content {
+	contentsMu.RLock()
+	defer contentsMu.RUnlock()
+	out := make(map[string]Content, len(contents))
+	for k, v := range contents {
+		out[k] = v
+	}
+	return out
 }
 
 // Deprecated: token-based system replaced with Google Drive direct links
@@ -460,6 +237,8 @@ func main() {
 	}
 
 	port := getenv("APP_PORT", "8080")
+	sheetID := getenv("GOOGLE_SHEET_ID", "")
+	sheetRefreshMin := getenvInt("SHEET_REFRESH_MINUTES", 5)
 
 	keyID := getenv("RAZORPAY_KEY_ID", "")
 	keySecret := getenv("RAZORPAY_KEY_SECRET", "")
@@ -470,6 +249,35 @@ func main() {
 		ClientID:     getenv("GOOGLE_DRIVE_CLIENT_ID", ""),
 		ClientSecret: getenv("GOOGLE_DRIVE_CLIENT_SECRET", ""),
 		RefreshToken: getenv("GOOGLE_DRIVE_REFRESH_TOKEN", ""),
+	}
+
+	// Load contents from Google Sheet if configured
+	if sheetID != "" {
+		if err := loadContentsFromSheet(sheetID); err != nil {
+			log.Printf("⚠️ failed to load contents from Google Sheet: %v (starting with empty content)", err)
+		} else {
+			contentsMu.RLock()
+			count := len(contents)
+			contentsMu.RUnlock()
+			log.Printf("✅ Loaded %d content items from Google Sheet", count)
+		}
+		// Start background refresh
+		go func() {
+			ticker := time.NewTicker(time.Duration(sheetRefreshMin) * time.Minute)
+			defer ticker.Stop()
+			for range ticker.C {
+				if err := loadContentsFromSheet(sheetID); err != nil {
+					log.Printf("⚠️ sheet refresh failed: %v", err)
+				} else {
+					contentsMu.RLock()
+					count := len(contents)
+					contentsMu.RUnlock()
+					log.Printf("🔄 Refreshed %d content items from Google Sheet", count)
+				}
+			}
+		}()
+	} else {
+		log.Printf("⚠️ GOOGLE_SHEET_ID is not set; no content will be loaded. Set it to the spreadsheet ID to load content from Google Sheets.")
 	}
 
 	var razorpayClient *razorpay.Client
@@ -526,7 +334,7 @@ func main() {
 
 	r.GET("/api/content/:contentId", func(c *gin.Context) {
 		id := c.Param("contentId")
-		content, ok := contents[id]
+		content, ok := getContent(id)
 		if !ok {
 			c.JSON(http.StatusNotFound, gin.H{"error": "content not found"})
 			return
@@ -671,9 +479,11 @@ func main() {
 	})
 
 	r.GET("/api/contents", func(c *gin.Context) {
-		list := make([]Content, 0, len(contentOrder))
-		for _, id := range contentOrder {
-			if content, ok := contents[id]; ok {
+		order := getContentOrder()
+		allContents := getAllContents()
+		list := make([]Content, 0, len(order))
+		for _, id := range order {
+			if content, ok := allContents[id]; ok {
 				list = append(list, content)
 			}
 		}
@@ -733,7 +543,7 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "content_id is required"})
 			return
 		}
-		content, ok := contents[req.ContentID]
+		content, ok := getContent(req.ContentID)
 		if !ok {
 			c.JSON(http.StatusNotFound, gin.H{"error": "content not found"})
 			return
@@ -825,7 +635,7 @@ func main() {
 			buyerName = "there"
 		}
 
-		content, ok := contents[contentID]
+		content, ok := getContent(contentID)
 		if !ok {
 			c.JSON(http.StatusNotFound, VerifyPaymentResp{Status: "failed", Message: "content not found"})
 			return
@@ -866,6 +676,149 @@ func main() {
 	if err := r.Run(addr); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// --- Google Sheets Integration ---
+
+// sheetCSVURL returns the public CSV export URL for a given Google Sheet ID and gid.
+func sheetCSVURL(sheetID string, gid int) string {
+	return fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=csv&gid=%d", url.PathEscape(sheetID), gid)
+}
+
+// parseCurrencyInt extracts an integer from a string that may contain currency symbols (₹), commas, or percent signs.
+var currencyCleanRe = regexp.MustCompile(`[^\d]`)
+
+func parseCurrencyInt(s string) int {
+	s = strings.TrimSpace(s)
+	s = strings.TrimSuffix(s, "%")
+	s = currencyCleanRe.ReplaceAllString(s, "")
+	if s == "" {
+		return 0
+	}
+	v, _ := strconv.Atoi(s)
+	return v
+}
+
+// loadContentsFromSheet fetches the published Google Sheet as CSV and parses it into
+// the contents map and contentOrder slice.
+// Expected columns: id, title, description, category, price, offer_price, discount_percent,
+//
+//	google_drive_id, google_drive_ids (pipe-separated URLs), file_path
+func loadContentsFromSheet(sheetID string) error {
+	csvURL := sheetCSVURL(sheetID, 0)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(csvURL)
+	if err != nil {
+		return fmt.Errorf("failed to fetch sheet CSV: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("sheet CSV fetch returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	reader := csv.NewReader(resp.Body)
+	reader.LazyQuotes = true
+	records, err := reader.ReadAll()
+	if err != nil {
+		return fmt.Errorf("failed to parse sheet CSV: %w", err)
+	}
+
+	if len(records) < 2 {
+		return fmt.Errorf("sheet has no data rows (only %d rows)", len(records))
+	}
+
+	// Build column index from header row
+	header := records[0]
+	colIdx := map[string]int{}
+	for i, col := range header {
+		colIdx[strings.TrimSpace(strings.ToLower(col))] = i
+	}
+
+	// Verify required columns exist
+	required := []string{"id"}
+	for _, col := range required {
+		if _, ok := colIdx[col]; !ok {
+			return fmt.Errorf("sheet is missing required column: %q (found: %v)", col, header)
+		}
+	}
+
+	col := func(row []string, name string) string {
+		idx, ok := colIdx[name]
+		if !ok || idx >= len(row) {
+			return ""
+		}
+		return strings.TrimSpace(row[idx])
+	}
+
+	newContents := map[string]Content{}
+	newOrder := []string{}
+
+	for _, row := range records[1:] {
+		id := col(row, "id")
+		if id == "" {
+			continue // skip empty rows
+		}
+
+		c := Content{
+			ID:              id,
+			Title:           col(row, "title"),
+			Description:     col(row, "description"),
+			Category:        col(row, "category"),
+			Price:           parseCurrencyInt(col(row, "price")),
+			OfferPrice:      parseCurrencyInt(col(row, "offer_price")),
+			DiscountPercent: parseCurrencyInt(col(row, "discount_percent")),
+			GoogleDriveID:   col(row, "google_drive_id"),
+			FilePath:        col(row, "file_path"),
+		}
+
+		// Parse pipe-separated google_drive_ids: "url1|url2|..."
+		// The sheet stores just URLs; titles are derived from the content title
+		driveIDsRaw := col(row, "google_drive_ids")
+		if driveIDsRaw != "" {
+			parts := strings.Split(driveIDsRaw, "|")
+			for _, part := range parts {
+				part = strings.TrimSpace(part)
+				if part == "" {
+					continue
+				}
+				c.GoogleDriveIDs = append(c.GoogleDriveIDs, GoogleDriveLink{
+					Title: c.Title,
+					ID:    part,
+				})
+			}
+		}
+
+		// Parse pipe-separated google_drive_titles if present: "title1|title2|..."
+		// This allows the sheet to override the default title for each drive link
+		driveTitlesRaw := col(row, "google_drive_titles")
+		if driveTitlesRaw != "" && len(c.GoogleDriveIDs) > 0 {
+			titles := strings.Split(driveTitlesRaw, "|")
+			for i, title := range titles {
+				title = strings.TrimSpace(title)
+				if title != "" && i < len(c.GoogleDriveIDs) {
+					c.GoogleDriveIDs[i].Title = title
+				}
+			}
+		}
+
+		newContents[id] = c
+		newOrder = append(newOrder, id)
+	}
+
+	if len(newContents) == 0 {
+		return fmt.Errorf("sheet parsed but no valid content rows found")
+	}
+
+	// Atomically swap the contents
+	contentsMu.Lock()
+	contents = newContents
+	contentOrder = newOrder
+	contentsMu.Unlock()
+
+	return nil
 }
 
 func loadCourseOffers() (CourseOfferFile, error) {

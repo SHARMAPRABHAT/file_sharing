@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:24px;background:#f4f6f8;font-family:Arial,sans-serif;color:#202124;">
+    <main style="max-width:600px;margin:0 auto;padding:28px;background:#ffffff;border:1px solid #e1e5e9;">
+      <p style="margin:0 0 20px;">Hello {{.BuyerName}},</p>
+      <p style="margin:0 0 20px;">Thank you for your purchase. Your order has been confirmed.</p>
+      <p style="margin:0 0 8px;"><strong>Product:</strong> {{.Title}}</p>
+      {{if .Links}}
+      <p style="margin:24px 0 10px;">Your PDF files are ready on Google Drive:</p>
+      <ol style="margin:0;padding-left:24px;">
+        {{range .Links}}
+        <li style="padding:6px 0;"><a href="{{.URL}}" style="color:#176b57;">{{.Title}}</a></li>
+        {{end}}
+      </ol>
+      {{else}}
+      <p style="margin:24px 0 10px;">Your purchased PDF is attached to this email.</p>
+      {{end}}
+      <p style="margin:24px 0 0;">If you need any assistance, please contact our support team.</p>
+    </main>
+  </body>
+</html>

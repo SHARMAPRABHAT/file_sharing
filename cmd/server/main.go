@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	htmltemplate "html/template"
 	"io"
 	"log"
 	"net/http"
@@ -785,8 +786,7 @@ func loadContentsFromSheet(sheetID string) error {
 					continue
 				}
 				c.GoogleDriveIDs = append(c.GoogleDriveIDs, GoogleDriveLink{
-					Title: c.Title,
-					ID:    part,
+					ID: part,
 				})
 			}
 		}
@@ -1152,6 +1152,7 @@ type resendPayload struct {
 	To          []string           `json:"to"`
 	Subject     string             `json:"subject"`
 	Text        string             `json:"text"`
+	HTML        string             `json:"html,omitempty"`
 	Attachments []resendAttachment `json:"attachments,omitempty"`
 }
 
@@ -1172,14 +1173,27 @@ func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content C
 	if err != nil {
 		return fmt.Errorf("failed to parse email template: %w", err)
 	}
+	htmlTemplateText, err := os.ReadFile("./web/email_templates/purchase_success.html")
+	if err != nil {
+		return fmt.Errorf("failed to read HTML email template: %w", err)
+	}
+	htmlTmpl, err := htmltemplate.New("purchase_success_html").Parse(string(htmlTemplateText))
+	if err != nil {
+		return fmt.Errorf("failed to parse HTML email template: %w", err)
+	}
 
 	var rendered bytes.Buffer
-	if err := tmpl.Execute(&rendered, map[string]interface{}{
+	data := map[string]interface{}{
 		"BuyerName": buyerName,
 		"Title":     content.Title,
 		"Links":     links,
-	}); err != nil {
+	}
+	if err := tmpl.Execute(&rendered, data); err != nil {
 		return fmt.Errorf("failed to render email template: %w", err)
+	}
+	var renderedHTML bytes.Buffer
+	if err := htmlTmpl.Execute(&renderedHTML, data); err != nil {
+		return fmt.Errorf("failed to render HTML email template: %w", err)
 	}
 
 	payload := resendPayload{
@@ -1187,6 +1201,7 @@ func sendDeliveryEmail(resendAPIKey, resendFrom, to, buyerName string, content C
 		To:      []string{to},
 		Subject: "Your purchase is confirmed - Download link",
 		Text:    rendered.String(),
+		HTML:    renderedHTML.String(),
 	}
 
 	if len(links) == 0 {
@@ -1331,14 +1346,20 @@ func courseOfferAttachments(course CourseOfferState) ([]resendAttachment, error)
 func deliveryLinks(content Content) []deliveryLink {
 	if len(content.GoogleDriveIDs) > 0 {
 		links := make([]deliveryLink, 0, len(content.GoogleDriveIDs))
-		for _, item := range content.GoogleDriveIDs {
+		for i, item := range content.GoogleDriveIDs {
 			link := driveShareLink(item.ID)
 			if link == "" {
 				continue
 			}
 			title := strings.TrimSpace(item.Title)
 			if title == "" {
-				title = content.Title
+				if len(content.GoogleDriveIDs) == 1 {
+					title = content.Title
+				} else if content.Title != "" {
+					title = fmt.Sprintf("%s - PDF %d", content.Title, i+1)
+				} else {
+					title = fmt.Sprintf("PDF %d", i+1)
+				}
 			}
 			links = append(links, deliveryLink{Title: title, URL: link})
 		}

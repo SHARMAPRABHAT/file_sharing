@@ -704,7 +704,7 @@ func parseCurrencyInt(s string) int {
 // the contents map and contentOrder slice.
 // Expected columns: id, title, description, category, price, offer_price, discount_percent,
 //
-//	google_drive_id, google_drive_ids (pipe-separated URLs), file_path
+//	google_drive_id, google_drive_ids (pipe- or whitespace-separated URLs), file_path
 func loadContentsFromSheet(sheetID string) error {
 	csvURL := sheetCSVURL(sheetID, 0)
 
@@ -775,16 +775,12 @@ func loadContentsFromSheet(sheetID string) error {
 			FilePath:        col(row, "file_path"),
 		}
 
-		// Parse pipe-separated google_drive_ids: "url1|url2|..."
+		// Parse pipe- or whitespace-separated google_drive_ids.
 		// The sheet stores just URLs; titles are derived from the content title
 		driveIDsRaw := col(row, "google_drive_ids")
 		if driveIDsRaw != "" {
-			parts := strings.Split(driveIDsRaw, "|")
+			parts := splitDriveLinks(driveIDsRaw)
 			for _, part := range parts {
-				part = strings.TrimSpace(part)
-				if part == "" {
-					continue
-				}
 				c.GoogleDriveIDs = append(c.GoogleDriveIDs, GoogleDriveLink{
 					ID: part,
 				})
@@ -926,6 +922,10 @@ func extractDriveFileID(value string) string {
 		return id
 	}
 	return ""
+}
+
+func splitDriveLinks(raw string) []string {
+	return strings.Fields(strings.ReplaceAll(raw, "|", " "))
 }
 
 func (cfg DriveOAuthConfig) Configured() bool {

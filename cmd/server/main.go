@@ -167,7 +167,7 @@ type AccessToken struct {
 	CreatedAt time.Time
 }
 
-var categories = []Category{
+var defaultCategories = []Category{
 	{
 		ID:          "paper-1-dictionary",
 		Title:       "PAPER 1 DICTIONARY",
@@ -188,6 +188,17 @@ var categories = []Category{
 		Title:       "COMMERCE SPECIAL NOTES",
 		Description: "Special Commerce notes for revision and practice.",
 	},
+}
+
+var (
+	categoriesMu sync.RWMutex
+	categories   = append([]Category(nil), defaultCategories...)
+)
+
+func getCategories() []Category {
+	categoriesMu.RLock()
+	defer categoriesMu.RUnlock()
+	return append([]Category(nil), categories...)
 }
 
 // contents and contentOrder are loaded dynamically from Google Sheets.
@@ -239,7 +250,27 @@ func main() {
 
 	port := getenv("APP_PORT", "8080")
 	sheetID := getenv("GOOGLE_SHEET_ID", "")
+	categorySheetID := getenv("GOOGLE_CATEGORY_SHEET_ID", "1M8UoN1uuDX_m2U1o3GVAAQCYKqxTsoJtbgZbbgH5LGU")
 	sheetRefreshMin := getenvInt("SHEET_REFRESH_MINUTES", 5)
+
+	if categorySheetID != "" {
+		if err := loadCategoriesFromSheet(categorySheetID, 548445004); err != nil {
+			log.Printf("⚠️ failed to load categories from Google Sheet: %v (using fallback categories)", err)
+		} else {
+			log.Printf("✅ Loaded %d categories from Google Sheet", len(getCategories()))
+		}
+		go func() {
+			ticker := time.NewTicker(time.Duration(sheetRefreshMin) * time.Minute)
+			defer ticker.Stop()
+			for range ticker.C {
+				if err := loadCategoriesFromSheet(categorySheetID, 548445004); err != nil {
+					log.Printf("⚠️ category sheet refresh failed: %v", err)
+				} else {
+					log.Printf("🔄 Refreshed %d categories from Google Sheet", len(getCategories()))
+				}
+			}
+		}()
+	}
 
 	keyID := getenv("RAZORPAY_KEY_ID", "")
 	keySecret := getenv("RAZORPAY_KEY_SECRET", "")
@@ -344,7 +375,7 @@ func main() {
 	})
 
 	r.GET("/api/categories", func(c *gin.Context) {
-		c.JSON(http.StatusOK, categories)
+		c.JSON(http.StatusOK, getCategories())
 	})
 
 	r.GET("/api/course-offers", func(c *gin.Context) {
@@ -684,6 +715,83 @@ func main() {
 // sheetCSVURL returns the public CSV export URL for a given Google Sheet ID and gid.
 func sheetCSVURL(sheetID string, gid int) string {
 	return fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=csv&gid=%d", url.PathEscape(sheetID), gid)
+}
+
+func loadCategoriesFromSheet(sheetID string, gid int) error {
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(sheetCSVURL(sheetID, gid))
+	if err != nil {
+		return fmt.Errorf("failed to fetch category sheet CSV: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("category sheet CSV fetch returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	loaded, err := parseCategoriesCSV(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	categoriesMu.Lock()
+	categories = loaded
+	categoriesMu.Unlock()
+	return nil
+}
+
+func parseCategoriesCSV(r io.Reader) ([]Category, error) {
+	reader := csv.NewReader(r)
+	reader.LazyQuotes = true
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse category sheet CSV: %w", err)
+	}
+	if len(records) < 2 {
+		return nil, fmt.Errorf("category sheet has no data rows (only %d rows)", len(records))
+	}
+
+	colIdx := map[string]int{}
+	for i, header := range records[0] {
+		name := strings.ToLower(strings.TrimSpace(header))
+		name = strings.Join(strings.Fields(name), " ")
+		colIdx[name] = i
+	}
+	for _, name := range []string{"category id", "title", "status"} {
+		if _, ok := colIdx[name]; !ok {
+			return nil, fmt.Errorf("category sheet is missing required column: %q", name)
+		}
+	}
+
+	col := func(row []string, name string) string {
+		idx, ok := colIdx[name]
+		if !ok || idx >= len(row) {
+			return ""
+		}
+		return strings.TrimSpace(row[idx])
+	}
+
+	loaded := make([]Category, 0, len(records)-1)
+	for _, row := range records[1:] {
+		if !strings.EqualFold(col(row, "status"), "enabled") {
+			continue
+		}
+		id := col(row, "category id")
+		title := col(row, "title")
+		if id == "" || title == "" {
+			continue
+		}
+		loaded = append(loaded, Category{
+			ID:          id,
+			Title:       title,
+			Description: col(row, "description"),
+		})
+	}
+	if len(loaded) == 0 {
+		return nil, fmt.Errorf("category sheet has no enabled categories")
+	}
+	return loaded, nil
 }
 
 // parseCurrencyInt extracts an integer from a string that may contain currency symbols (₹), commas, or percent signs.

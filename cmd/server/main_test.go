@@ -2,6 +2,7 @@ package main
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -50,5 +51,24 @@ func TestSplitDriveLinksSupportsPipeDelimiter(t *testing.T) {
 	want := []string{"first", "second", "third"}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("splitDriveLinks() = %#v, want %#v", got, want)
+	}
+}
+
+func TestParseCategoriesCSVIncludesOnlyEnabledCategories(t *testing.T) {
+	input := `Category ID,Title,Description,Status
+commerce-dictionary,COMMERCE DICTIONARY,Commerce terms,Enabled
+commerce-special-notes,COMMERCE SPECIAL NOTES,Special revision notes,Disabled
+paper-1-pyqs-and-practices,PAPER 1 PYQS AND PRACTICES,Paper 1 practice,enabled
+`
+	got, err := parseCategoriesCSV(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("parseCategoriesCSV() error = %v", err)
+	}
+	want := []Category{
+		{ID: "commerce-dictionary", Title: "COMMERCE DICTIONARY", Description: "Commerce terms"},
+		{ID: "paper-1-pyqs-and-practices", Title: "PAPER 1 PYQS AND PRACTICES", Description: "Paper 1 practice"},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("parseCategoriesCSV() = %#v, want %#v", got, want)
 	}
 }

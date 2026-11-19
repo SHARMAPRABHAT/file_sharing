@@ -127,6 +127,7 @@ TOKEN_SECRET=super-secret-hmac-key
 # Google
 GOOGLE_SERVICE_ACCOUNT_JSON=./secrets/service-account.json
 GOOGLE_SHEET_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+GOOGLE_CATEGORY_SHEET_ID=1M8UoN1uuDX_m2U1o3GVAAQCYKqxTsoJtbgZbbgH5LGU
 GOOGLE_DRIVE_FOLDER_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # Optional
@@ -138,6 +139,12 @@ LOG_LEVEL=info
 ---
 
 ## Google Sheets Format (Recommended)
+
+Buy-note categories load from the sheet identified by `GOOGLE_CATEGORY_SHEET_ID`
+(defaults to the category spreadsheet above), tab gid `548445004`. The tab must
+include `Category ID`, `Title`, `Description`, and `Status` columns; only rows
+with status `Enabled` are returned by `/api/categories`. Category data refreshes
+on the `SHEET_REFRESH_MINUTES` interval.
 
 Create a Google Sheet with these tabs:
 

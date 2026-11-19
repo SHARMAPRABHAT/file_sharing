@@ -117,11 +117,15 @@ type ContactReq struct {
 type CourseOfferState struct {
 	Title           string            `json:"title"`
 	Description     string            `json:"description,omitempty"`
+	OfferTitle      string            `json:"offer_title,omitempty"`
 	Price           int               `json:"price,omitempty"`
+	DiscountPrice   int               `json:"discount_price,omitempty"`
+	EarlyBirdPrice  int               `json:"early_bird_price,omitempty"`
 	OfferPrice      int               `json:"offer_price,omitempty"`
 	DiscountPercent int               `json:"discount_percent,omitempty"`
 	Sold            int               `json:"sold"`
 	Total           int               `json:"total"`
+	GuideURL        string            `json:"guide_url,omitempty"`
 	GoogleDriveID   string            `json:"google_drive_id,omitempty"`
 	GoogleDriveIDs  []GoogleDriveLink `json:"google_drive_ids,omitempty"`
 	FilePath        string            `json:"file_path,omitempty"`
@@ -129,6 +133,11 @@ type CourseOfferState struct {
 
 type CourseOfferFile struct {
 	Courses map[string]CourseOfferState `json:"courses"`
+}
+
+type CourseCatalog struct {
+	Courses map[string]CourseOfferState
+	Order   []string
 }
 
 type CoursePurchaseReq struct {
@@ -154,7 +163,12 @@ type CourseCreateOrderResp struct {
 }
 
 var offerStateMu sync.Mutex
-var offerStatePath = "./data/course-offers.json"
+
+var (
+	courseCatalogMu     sync.RWMutex
+	courseCatalog       = CourseCatalog{Courses: map[string]CourseOfferState{}}
+	courseCatalogLoaded bool
+)
 
 // AccessToken deprecated: using Google Drive links instead
 type AccessToken struct {
@@ -251,6 +265,7 @@ func main() {
 	port := getenv("APP_PORT", "8080")
 	sheetID := getenv("GOOGLE_SHEET_ID", "")
 	categorySheetID := getenv("GOOGLE_CATEGORY_SHEET_ID", "1M8UoN1uuDX_m2U1o3GVAAQCYKqxTsoJtbgZbbgH5LGU")
+	courseSheetID := getenv("GOOGLE_COURSE_SHEET_ID", "1M8UoN1uuDX_m2U1o3GVAAQCYKqxTsoJtbgZbbgH5LGU")
 	sheetRefreshMin := getenvInt("SHEET_REFRESH_MINUTES", 5)
 
 	if categorySheetID != "" {
@@ -267,6 +282,25 @@ func main() {
 					log.Printf("⚠️ category sheet refresh failed: %v", err)
 				} else {
 					log.Printf("🔄 Refreshed %d categories from Google Sheet", len(getCategories()))
+				}
+			}
+		}()
+	}
+
+	if courseSheetID != "" {
+		if err := loadCourseCatalogFromSheet(courseSheetID, 1320525194); err != nil {
+			log.Printf("⚠️ failed to load course catalog from Google Sheet: %v", err)
+		} else {
+			log.Printf("✅ Loaded %d courses from Google Sheet", len(getCourseCatalog().Courses))
+		}
+		go func() {
+			ticker := time.NewTicker(time.Duration(sheetRefreshMin) * time.Minute)
+			defer ticker.Stop()
+			for range ticker.C {
+				if err := loadCourseCatalogFromSheet(courseSheetID, 1320525194); err != nil {
+					log.Printf("⚠️ course catalog sheet refresh failed: %v", err)
+				} else {
+					log.Printf("🔄 Refreshed %d courses from Google Sheet", len(getCourseCatalog().Courses))
 				}
 			}
 		}()
@@ -379,12 +413,8 @@ func main() {
 	})
 
 	r.GET("/api/course-offers", func(c *gin.Context) {
-		state, err := loadCourseOffers()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load course offer state"})
-			return
-		}
-		c.JSON(http.StatusOK, state)
+		catalog := getCourseCatalog()
+		c.JSON(http.StatusOK, gin.H{"courses": catalog.Courses, "course_order": catalog.Order})
 	})
 
 	r.POST("/api/course-offers/claim", func(c *gin.Context) {
@@ -406,12 +436,8 @@ func main() {
 			return
 		}
 
-		state, err := loadCourseOffers()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load course offer state"})
-			return
-		}
-		course, ok := state.Courses[req.CourseID]
+		catalog := getCourseCatalog()
+		course, ok := catalog.Courses[req.CourseID]
 		if !ok {
 			c.JSON(http.StatusNotFound, gin.H{"error": "course not found"})
 			return
@@ -470,12 +496,8 @@ func main() {
 
 		offerStateMu.Lock()
 		defer offerStateMu.Unlock()
-		state, err := loadCourseOffers()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load course offer state"})
-			return
-		}
-		course, ok := state.Courses[req.CourseID]
+		catalog := getCourseCatalog()
+		course, ok := catalog.Courses[req.CourseID]
 		if !ok {
 			c.JSON(http.StatusNotFound, gin.H{"error": "course not found"})
 			return
@@ -485,11 +507,7 @@ func main() {
 			return
 		}
 		course.Sold++
-		state.Courses[req.CourseID] = course
-		if err := saveCourseOffers(state); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save course offer state"})
-			return
-		}
+		updateCourseCatalogSold(req.CourseID, course.Sold)
 		if driveOAuth.Configured() {
 			courseDriveContent := Content{
 				ID:             req.CourseID,
@@ -741,6 +759,144 @@ func loadCategoriesFromSheet(sheetID string, gid int) error {
 	return nil
 }
 
+func loadCourseCatalogFromSheet(sheetID string, gid int) error {
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(sheetCSVURL(sheetID, gid))
+	if err != nil {
+		return fmt.Errorf("failed to fetch course catalog CSV: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("course catalog CSV fetch returned HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	loaded, err := parseCourseCatalogCSV(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	courseCatalogMu.Lock()
+	courseCatalog = loaded
+	courseCatalogLoaded = true
+	courseCatalogMu.Unlock()
+	return nil
+}
+
+func parseCourseCatalogCSV(r io.Reader) (CourseCatalog, error) {
+	reader := csv.NewReader(r)
+	reader.LazyQuotes = true
+	records, err := reader.ReadAll()
+	if err != nil {
+		return CourseCatalog{}, fmt.Errorf("failed to parse course catalog CSV: %w", err)
+	}
+	if len(records) < 2 {
+		return CourseCatalog{}, fmt.Errorf("course catalog sheet has no data rows (only %d rows)", len(records))
+	}
+
+	colIdx := map[string]int{}
+	for i, header := range records[0] {
+		name := strings.ToLower(strings.TrimSpace(header))
+		name = strings.Join(strings.Fields(name), " ")
+		colIdx[name] = i
+	}
+	col := func(row []string, name string) string {
+		idx, ok := colIdx[name]
+		if !ok || idx >= len(row) {
+			return ""
+		}
+		return strings.TrimSpace(row[idx])
+	}
+	firstCol := func(row []string, names ...string) string {
+		for _, name := range names {
+			if value := col(row, name); value != "" {
+				return value
+			}
+		}
+		return ""
+	}
+
+	for _, name := range []string{"status"} {
+		if _, ok := colIdx[name]; !ok {
+			return CourseCatalog{}, fmt.Errorf("course catalog sheet is missing required column: %q", name)
+		}
+	}
+
+	catalog := CourseCatalog{
+		Courses: make(map[string]CourseOfferState),
+		Order:   make([]string, 0, len(records)-1),
+	}
+	for _, row := range records[1:] {
+		status := col(row, "status")
+		if !strings.EqualFold(status, "enable") && !strings.EqualFold(status, "enabled") {
+			continue
+		}
+		id := firstCol(row, "pack", "course id")
+		title := firstCol(row, "title", "course title")
+		if id == "" || title == "" {
+			continue
+		}
+		if _, exists := catalog.Courses[id]; exists {
+			return CourseCatalog{}, fmt.Errorf("course catalog contains duplicate course id %q", id)
+		}
+
+		price := parseCurrencyInt(firstCol(row, "price", "original price"))
+		discountPrice := parseCurrencyInt(firstCol(row, "discount_price", "discount price"))
+		earlyBirdPrice := parseCurrencyInt(firstCol(row, "early_bird_price", "early bird price"))
+		offerPrice := parseCurrencyInt(firstCol(row, "offer_price", "offer price"))
+		if offerPrice == 0 {
+			offerPrice = earlyBirdPrice
+		}
+		total := parseCurrencyInt(firstCol(row, "total", "total seats"))
+		sold := parseCurrencyInt(firstCol(row, "sold", "seats filled"))
+		discountPercent := parseCurrencyInt(firstCol(row, "discount_percent", "discount percent"))
+		if discountPercent == 0 && price > 0 && offerPrice < price {
+			discountPercent = (price - offerPrice) * 100 / price
+		}
+		catalog.Courses[id] = CourseOfferState{
+			Title:           title,
+			Description:     firstCol(row, "description"),
+			OfferTitle:      firstCol(row, "offer_title", "offer title"),
+			Price:           price,
+			DiscountPrice:   discountPrice,
+			EarlyBirdPrice:  earlyBirdPrice,
+			OfferPrice:      offerPrice,
+			DiscountPercent: discountPercent,
+			Total:           total,
+			Sold:            sold,
+			GuideURL:        firstCol(row, "guide_url", "guide url"),
+			GoogleDriveID:   firstCol(row, "google_drive_id"),
+		}
+		catalog.Order = append(catalog.Order, id)
+	}
+	return catalog, nil
+}
+
+func getCourseCatalog() CourseCatalog {
+	courseCatalogMu.RLock()
+	defer courseCatalogMu.RUnlock()
+	catalog := CourseCatalog{
+		Courses: make(map[string]CourseOfferState, len(courseCatalog.Courses)),
+		Order:   append([]string(nil), courseCatalog.Order...),
+	}
+	for id, course := range courseCatalog.Courses {
+		catalog.Courses[id] = course
+	}
+	return catalog
+}
+
+func updateCourseCatalogSold(id string, sold int) {
+	courseCatalogMu.Lock()
+	defer courseCatalogMu.Unlock()
+	course, ok := courseCatalog.Courses[id]
+	if !ok {
+		return
+	}
+	course.Sold = sold
+	courseCatalog.Courses[id] = course
+}
+
 func parseCategoriesCSV(r io.Reader) ([]Category, error) {
 	reader := csv.NewReader(r)
 	reader.LazyQuotes = true
@@ -923,38 +1079,6 @@ func loadContentsFromSheet(sheetID string) error {
 	contentsMu.Unlock()
 
 	return nil
-}
-
-func loadCourseOffers() (CourseOfferFile, error) {
-	state := CourseOfferFile{Courses: map[string]CourseOfferState{}}
-	data, err := os.ReadFile(offerStatePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return state, nil
-		}
-		return state, err
-	}
-	if len(data) == 0 {
-		return state, nil
-	}
-	if err := json.Unmarshal(data, &state); err != nil {
-		return state, err
-	}
-	if state.Courses == nil {
-		state.Courses = map[string]CourseOfferState{}
-	}
-	return state, nil
-}
-
-func saveCourseOffers(state CourseOfferFile) error {
-	if err := os.MkdirAll(filepath.Dir(offerStatePath), 0o755); err != nil {
-		return err
-	}
-	data, err := json.MarshalIndent(state, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(offerStatePath, data, 0o644)
 }
 
 func getenv(key, fallback string) string {

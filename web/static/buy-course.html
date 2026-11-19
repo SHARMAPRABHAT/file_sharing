@@ -640,6 +640,11 @@
       gap: 12px;
     }
 
+    .catalog-status {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
     .course-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -991,34 +996,8 @@
         </div>
     </div>
 
-      <div class="course-grid">
-        
-
-        <article class="course-card">
-          <div class="catalog-offer-box">
-            <p class="catalog-title">Catalog Launch Offer</p>
-            <div class="catalog-price">
-              <span class="old">₹--</span>
-              <span class="new">₹--</span>
-            </div>
-            <p class="catalog-sub">Loading launch price…</p>
-            <div class="catalog-progress" aria-label="First 50 discount seats progress" style="--sold-percent: 0%;"><span style="width:0%"></span></div>
-            <p class="catalog-foot">0 of 0 seats already filled for early support</p>
-          </div>
-          <div class="course-card-header">
-            <h3>Crash Revision Pack</h3>
-            <span class="discount-pill">—</span>
-          </div>
-          <p class="course-meta">A compact exam-oriented package with high-value revision material to boost last-minute confidence.</p>
-          <div class="course-price-row">
-            <span class="old">₹--</span>
-            <span class="new">₹--</span>
-          </div>
-          <div class="course-actions">
-            <button class="btn btn-primary course-buy-btn" type="button" data-course-id="crash-revision-pack">Buy Now</button>
-            <a class="btn course-guide-btn" href="https://drive.google.com/file/d/1v6b_DxJLeFsmzIcXuRKCW5ERhU58kahF/view?usp=drive_link" target="_blank" rel="noopener noreferrer">Take Your Guide Here</a>
-          </div>
-        </article>
+      <p class="catalog-status" id="catalogStatus" role="status" aria-live="polite">Loading courses…</p>
+      <div class="course-grid" id="courseGrid">
       </div>
     </section>
 
@@ -1115,7 +1094,9 @@
     const claimCourseId = document.getElementById('claimCourseId');
     const claimSummary = document.getElementById('claimSummary');
     const claimStatus = document.getElementById('claimStatus');
-    const courseBuyButtons = document.querySelectorAll('.course-buy-btn');
+    const courseGrid = document.getElementById('courseGrid');
+    const catalogStatus = document.getElementById('catalogStatus');
+    let courseCards = new Map();
 
     document.querySelectorAll('[data-scroll-target]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1128,7 +1109,7 @@
 
     function openClaimModal(courseId, title) {
       claimCourseId.value = courseId;
-      claimSummary.textContent = 'Enter your details to reserve the launch offer seat for ' + title + '.';
+      claimSummary.textContent = 'Enter your details to purchase ' + title + '.';
       claimStatus.classList.remove('is-visible');
       claimStatus.textContent = '';
       claimModal.classList.add('is-open');
@@ -1141,13 +1122,101 @@
       claimForm.reset();
     }
 
-    courseBuyButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const card = button.closest('.course-card');
-        const title = card ? card.querySelector('h3')?.textContent?.trim() || 'this course' : 'this course';
-        openClaimModal(button.dataset.courseId, title);
+    function makeCourseCard(courseId, state) {
+      const article = document.createElement('article');
+      article.className = 'course-card';
+
+      const offerBox = document.createElement('div');
+      offerBox.className = 'catalog-offer-box';
+      const offerTitle = document.createElement('p');
+      offerTitle.className = 'catalog-title';
+      offerTitle.textContent = state.offer_title || 'Course Offer';
+      const catalogPrice = document.createElement('div');
+      catalogPrice.className = 'catalog-price';
+      const catalogOldPrice = document.createElement('span');
+      catalogOldPrice.className = 'old';
+      const catalogNewPrice = document.createElement('span');
+      catalogNewPrice.className = 'new';
+      catalogPrice.append(catalogOldPrice, catalogNewPrice);
+      const catalogSub = document.createElement('p');
+      catalogSub.className = 'catalog-sub';
+      const progress = document.createElement('div');
+      progress.className = 'catalog-progress';
+      progress.setAttribute('role', 'progressbar');
+      progress.setAttribute('aria-label', 'Early bird seats filled');
+      progress.setAttribute('aria-valuemin', '0');
+      progress.setAttribute('aria-valuemax', String(state.total || 0));
+      const progressBar = document.createElement('span');
+      progress.append(progressBar);
+      const catalogFoot = document.createElement('p');
+      catalogFoot.className = 'catalog-foot';
+      offerBox.append(offerTitle, catalogPrice, catalogSub, progress, catalogFoot);
+
+      const header = document.createElement('div');
+      header.className = 'course-card-header';
+      const title = document.createElement('h3');
+      title.textContent = state.title;
+      const discountPill = document.createElement('span');
+      discountPill.className = 'discount-pill';
+      header.append(title, discountPill);
+
+      const description = document.createElement('p');
+      description.className = 'course-meta';
+      description.textContent = state.description || 'Early bird pricing is available while course seats remain.';
+
+      const priceRow = document.createElement('div');
+      priceRow.className = 'course-price-row';
+      const cardOldPrice = document.createElement('span');
+      cardOldPrice.className = 'old';
+      const cardNewPrice = document.createElement('span');
+      cardNewPrice.className = 'new';
+      priceRow.append(cardOldPrice, cardNewPrice);
+
+      const actions = document.createElement('div');
+      actions.className = 'course-actions';
+      const buyButton = document.createElement('button');
+      buyButton.className = 'btn btn-primary course-buy-btn';
+      buyButton.type = 'button';
+      buyButton.dataset.courseId = courseId;
+      buyButton.textContent = 'Buy Now';
+      buyButton.addEventListener('click', () => openClaimModal(courseId, state.title));
+      actions.append(buyButton);
+
+      if (state.guide_url) {
+        try {
+          const guideURL = new URL(state.guide_url);
+          if (guideURL.protocol === 'https:' || guideURL.protocol === 'http:') {
+            const guide = document.createElement('a');
+            guide.className = 'btn course-guide-btn';
+            guide.href = guideURL.href;
+            guide.target = '_blank';
+            guide.rel = 'noopener noreferrer';
+            guide.textContent = 'Take Your Guide Here';
+            actions.append(guide);
+          }
+        } catch (error) {
+          console.warn('Skipping invalid course guide URL for ' + courseId);
+        }
+      }
+
+      article.append(offerBox, header, description, priceRow, actions);
+      return article;
+    }
+
+    function renderCourses(data) {
+      const courses = data.courses || {};
+      const order = Array.isArray(data.course_order) ? data.course_order : Object.keys(courses);
+      courseGrid.replaceChildren();
+      courseCards = new Map();
+      const courseIds = order.filter((courseId) => courses[courseId]);
+      courseIds.forEach((courseId) => {
+        const card = makeCourseCard(courseId, courses[courseId]);
+        courseCards.set(courseId, card);
+        courseGrid.append(card);
       });
-    });
+      catalogStatus.textContent = courseIds.length ? '' : 'No courses are currently available.';
+      catalogStatus.hidden = courseIds.length > 0;
+    }
 
     document.querySelectorAll('[data-close-claim]').forEach((closeBtn) => {
       closeBtn.addEventListener('click', closeClaimModal);
@@ -1161,9 +1230,10 @@
           throw new Error(data?.error || 'Unable to load offer state');
         }
 
-        document.querySelectorAll('.course-card').forEach((article) => {
-          const courseId = article.querySelector('.course-buy-btn')?.dataset.courseId;
-          const state = data.courses?.[courseId];
+        renderCourses(data);
+        Object.entries(data.courses || {}).forEach(([courseId, state]) => {
+          const article = courseCards.get(courseId);
+          if (!article) return;
           const progress = article.querySelector('.catalog-progress');
           const foot = article.querySelector('.catalog-foot');
           const oldPrice = article.querySelector('.catalog-price .old');
@@ -1172,12 +1242,13 @@
           const cardNewPrice = article.querySelector('.course-price-row .new');
           const discountPill = article.querySelector('.discount-pill');
           const catalogSub = article.querySelector('.catalog-sub');
-          const sold = Number(state?.sold ?? 0);
-          const total = Number(state?.total ?? 0);
+          const sold = Number(state.sold ?? 0);
+          const total = Number(state.total ?? 0);
           const percent = total > 0 ? Math.max(0, Math.min(100, Math.round((sold / total) * 100))) : 0;
-          const price = Number(state?.price ?? 0);
-          const offerPrice = Number(state?.offer_price ?? 0);
-          const discountPercent = Number(state?.discount_percent ?? 0);
+          const price = Number(state.price ?? 0);
+          const offerPrice = Number(state.early_bird_price || state.offer_price || 0);
+          const discountPrice = Number(state.discount_price ?? 0);
+          const discountPercent = Number(state.discount_percent ?? 0);
 
           if (oldPrice) oldPrice.textContent = '₹' + price.toLocaleString('en-IN');
           if (newPrice) newPrice.textContent = '₹' + offerPrice.toLocaleString('en-IN');
@@ -1186,20 +1257,30 @@
           if (discountPill && discountPercent > 0) {
             discountPill.textContent = discountPercent + '% off';
           }
-          if (catalogSub && price > 0 && offerPrice > 0) {
-            const savings = price - offerPrice;
-            catalogSub.textContent = 'Extra deal for the first 50 users: get ₹' + savings.toLocaleString('en-IN') + ' more off.';
+          if (catalogSub && discountPrice > 0) {
+            catalogSub.textContent = 'Standard offer ₹' + discountPrice.toLocaleString('en-IN') +
+              '; early bird price ₹' + offerPrice.toLocaleString('en-IN') + '.';
+          } else if (catalogSub && price > 0 && offerPrice > 0) {
+            catalogSub.textContent = 'Save ₹' + (price - offerPrice).toLocaleString('en-IN') + ' with early bird pricing.';
           }
           if (progress) {
             progress.style.setProperty('--sold-percent', percent + '%');
             progress.querySelector('span').style.width = percent + '%';
+            progress.setAttribute('aria-valuenow', String(sold));
           }
           if (foot) {
             foot.textContent = sold + ' of ' + total + ' seats already filled for early support';
           }
+          const buyButton = article.querySelector('.course-buy-btn');
+          if (buyButton && (total <= 0 || sold >= total)) {
+            buyButton.disabled = true;
+            buyButton.textContent = total > 0 ? 'Sold Out' : 'Unavailable';
+          }
         });
       } catch (error) {
         console.error('Failed to load course offer state', error);
+        catalogStatus.textContent = 'Courses could not be loaded. Please refresh and try again.';
+        catalogStatus.hidden = false;
       }
     }
 

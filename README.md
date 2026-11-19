@@ -128,6 +128,7 @@ TOKEN_SECRET=super-secret-hmac-key
 GOOGLE_SERVICE_ACCOUNT_JSON=./secrets/service-account.json
 GOOGLE_SHEET_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 GOOGLE_CATEGORY_SHEET_ID=1M8UoN1uuDX_m2U1o3GVAAQCYKqxTsoJtbgZbbgH5LGU
+GOOGLE_COURSE_SHEET_ID=1M8UoN1uuDX_m2U1o3GVAAQCYKqxTsoJtbgZbbgH5LGU
 GOOGLE_DRIVE_FOLDER_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # Optional
@@ -145,6 +146,15 @@ Buy-note categories load from the sheet identified by `GOOGLE_CATEGORY_SHEET_ID`
 include `Category ID`, `Title`, `Description`, and `Status` columns; only rows
 with status `Enabled` are returned by `/api/categories`. Category data refreshes
 on the `SHEET_REFRESH_MINUTES` interval.
+
+The `/buy-courses` catalog loads entirely from `GOOGLE_COURSE_SHEET_ID`
+(defaults to the same spreadsheet), tab gid `1320525194`. Add one row per course
+using these columns: `pack`, `title`, `price`, `discount_price`,
+`early_bird_price`, `offer_price`, `discount_percent`, `sold`, `total`,
+`offer_title`, `description`, `guide_url`, `google_drive_id`, and `Status`.
+Rows marked `Enable` or `Enabled` appear on the page in sheet order. Catalog,
+sales, guide, and paid delivery data refresh from the sheet every
+`SHEET_REFRESH_MINUTES` interval.
 
 Create a Google Sheet with these tabs:
 
